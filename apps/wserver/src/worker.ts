@@ -9,9 +9,7 @@ import logger from './utils/logger';
 import { redis } from './utils/redis';
 export const sessions = new Map();
 export const msgRetryCounterCache = new NodeCache();
-setInterval(() => {
-  console.log(sessions.keys())
-}, 5000)
+
 new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
   logger.info(`Processing job: ${job.name} for session: ${job.data.sender}`);
   switch (job.data.type) {
@@ -65,6 +63,16 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
           console.log(sock, result, response);
         } catch (error) {
           console.error('Failed to send message:', error);
+          if (blastId) {
+            const blast = await prisma.blast.update({
+              where: {
+                id: blastId
+              },
+              data: {
+                status: 'Failed',
+              }
+            })
+          }
           throw error; // Fail the job so it can be retried
         }
       } else {
@@ -108,18 +116,34 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
       const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
         connection: redis,
       })
-      campaign.blasts.map(async (blast) => {
-        await queue.add("send-message", {
-          type: 'send-message',
-          sender: sender,
-          receiver: blast.contact.phone,
-          blastId: blast.id,
-          message: campaign.message ?? "Default"
+      await queue.addBulk(
+        campaign.blasts.map((blast) => {
+          return {
+            name: "send-message",
+            data: {
+              type: 'send-message',
+              sender: sender,
+              receiver: blast.contact.phone,
+              blastId: blast.id,
+              message: campaign.message ?? "Default"
+            },
+            opts: {
+              attempts: 3,
+              removeOnComplete: true,
+              removeOnFail: true,
+            }
+          }
         })
-      })
+      )
     }
   }
-}, { connection: redis });
+}, {
+  connection: redis, removeOnComplete: {
+    age: 0
+  }, removeOnFail: {
+    age: 0
+  }
+});
 
 async function initializeWorker() {
   logger.info('WhatsApp worker initialized');
@@ -135,5 +159,6 @@ async function initializeWorker() {
   })
 }
 
-
-initializeWorker()
+if (process.env.NODE_ENV !== 'test') {
+  initializeWorker();
+}

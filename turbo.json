@@ -39,6 +39,10 @@
     "dev": {
       "persistent": true,
       "cache": false
+    },
+    "test": {
+      "persistent": true,
+      "cache": false
     }
   }
 }

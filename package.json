@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "test": "turbo run test",
     "generate": "turbo run generate",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:reset": "bun --cwd packages/db db:migrate:reset",
@@ -18,6 +19,9 @@
     "studio": "turbo run studio"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.1",
+    "ts-jest": "^29.4.1",
     "turbo": "latest"
   },
   "packageManager": "bun@1.2.19"

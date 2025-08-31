@@ -1,6 +1,5 @@
 'use server'
 
-import { createCampaignSchema } from "@/app/(admin)/campaigns/campaignSchema"
 import { auth } from "@/lib/auth"
 import { QUEUE_NAME } from "@/lib/constants/global"
 import { prisma } from "@repo/db"
@@ -10,6 +9,7 @@ import { Queue } from "bullmq"
 import { headers } from "next/headers"
 import z from "zod"
 import { revalidatePath } from "next/cache"
+import { createCampaignSchema } from "@/app/(admin)/campaigns/new/campaignSchema"
 
 export const createCampaign = async (values: z.infer<typeof createCampaignSchema>) => {
   const session = await auth.api.getSession({
@@ -53,6 +53,10 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     type: "campaign",
     campaignId: data.id,
     sender: values.sender
+  }, {
+    removeOnComplete: true,
+    attempts: 3,
+    removeOnFail: true
   })
 }
 

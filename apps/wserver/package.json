@@ -8,21 +8,24 @@
     "worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "lint": "eslint ./src",
     "build": "rimraf ./dist && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
     "q": "ts-node src/test.ts",
-    "send": "ts-node src/send-message.ts"
+    "send": "ts-node src/send-message.ts",
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
     "@types/mime": "^3.0.4",
     "@types/qrcode-terminal": "^0.12.2",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
     "eslint": "^9.32.0",
+    "jest": "^30.1.1",
     "rimraf": "^6.0.1",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"

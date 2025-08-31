@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "socket": "tsx watch socket/server.ts",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "jest --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -84,12 +85,18 @@
     "@tailwindcss/postcss": "^4",
     "@tanstack/eslint-plugin-query": "^5.83.1",
     "@tanstack/react-query-devtools": "^5.84.1",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "jest": "^30.1.1",
+    "jest-environment-jsdom": "^30.1.1",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.1",
     "turbo": "^2.5.5",
     "typescript": "^5"
   }

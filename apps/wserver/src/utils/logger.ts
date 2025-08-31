@@ -7,6 +7,7 @@ const log = logger({
   transport: {
     target: "pino-pretty",
   },
+  enabled: process.env.NODE_ENV !== "production",
   base: {
     pid: false,
   },

@@ -5,8 +5,8 @@ async function main() {
   const user = await prisma.user.findFirst()
   const data = Array.from({ length: 10 }).map((_, i) => {
     return {
-      name: `Megha_${i}`,
-      phone: "+917034983527",
+      name: `Nibha_${i}`,
+      phone: "+918943025837",
       contactGroupId: group?.id!,
       userId: user?.id!
     }

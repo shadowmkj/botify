@@ -12,10 +12,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const CampaignDetailsPage = async ({ params }: { params: { campaignId: string } }) => {
+const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: string }> }) => {
   const campaign = await prisma.campaign.findUnique({
     where: {
-      id: params.campaignId,
+      id: (await params).campaignId,
     },
     include: {
       blasts: {
