@@ -36,7 +36,7 @@ export default function CampaignForm({ contactGroups, campaign }: { contactGroup
       await updateCampaign(campaign.id, values)
       toast.success("Campaign Updated!")
       router.push("/campaigns")
-    } catch (err) {
+    } catch {
       toast.error("Error updating campaign!")
     }
     form.reset();

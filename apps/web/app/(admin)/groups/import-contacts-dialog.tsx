@@ -3,7 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+
 import { useState } from "react";
 import z from "zod";
 import { useForm } from "react-hook-form";
@@ -56,7 +56,7 @@ const ImportContactsDialog = () => {
           } else {
             toast.error(response.error || "Failed to import contacts.");
           }
-        } catch (error) {
+        } catch {
           toast.error("An unexpected error occurred.");
         } finally {
           setIsImporting(false);

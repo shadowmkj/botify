@@ -1,59 +1,102 @@
-# Dockerizing the Botify Application
+# Plan for Production Docker Environment
 
-This document outlines the plan to dockerize the Botify application using Docker and Docker Compose. This setup is intended for a development environment, enabling hot-reloading for the application code.
+This document outlines the plan to dockerize the Botify application for a production environment.
 
-## Step 1: Create a `Dockerfile`
+## Summary
 
-A multi-stage `Dockerfile` will be created in the root of the project to build a development image for the application.
+The goal is to create a production-ready Docker image for the application. This involves building the application and creating a minimal image with only the necessary artifacts and production dependencies. The entire application will run in a single container, started by a single command.
 
-### Dockerfile Stages
+## `start.sh` Script
 
-1.  **Base Stage:**
-    *   Start from the official `oven/bun:1` base image.
-    *   Install the `turborepo-cli` globally using `bun add -g turbo`.
-    *   Set the working directory to `/app`.
+A `start.sh` script will be created to run all the services in the single container.
 
-2.  **Dependencies Stage:**
-    *   Copy the root `package.json`, `bun.lock`, and `turbo.json`.
-    *   Copy all workspace `package.json` files to their respective directories.
-    *   Install all dependencies using `bun install --frozen-lockfile`.
+```sh
+#!/bin/sh
+node apps/socket/dist/server.js &
+node apps/wserver/dist/index.js &
+node apps/wserver/dist/worker.js &
+cd apps/web && bun run start
+```
 
-3.  **Runner Stage:**
-    *   Copy the entire source code.
-    *   Copy the `node_modules` from the dependencies stage.
-    *   The `CMD` will be `turbo run dev` to start all services in development mode.
+## Production `Dockerfile`
 
-## Step 2: Create a `compose.yaml`
+A multi-stage `Dockerfile` will be created for the production build. It will be named `Dockerfile.prod`.
 
-A `compose.yaml` file will be created in the root of the project to define and manage the multi-container application.
+```dockerfile
+# Builder Stage
+FROM oven/bun:1 as builder
+RUN apt-get update -y && apt-get install -y openssl
+RUN bun add -g turbo
+WORKDIR /app
+COPY package.json bun.lock turbo.json ./
+COPY apps/socket/package.json ./apps/socket/
+COPY apps/web/package.json ./apps/web/
+COPY apps/wserver/package.json ./apps/wserver/
+COPY packages/db/package.json ./packages/db/
+COPY packages/db/schema.prisma ./packages/db/
+COPY packages/redis/package.json ./packages/redis/
+COPY packages/types/package.json ./packages/types/
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+RUN bun install --frozen-lockfile
+COPY . .
+RUN turbo run build
 
-### Services
+# Runner Stage
+FROM node:20-slim as runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/socket/dist ./apps/socket/dist
+COPY --from=builder /app/apps/wserver/dist ./apps/wserver/dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/start.sh .
+RUN chmod +x start.sh
+EXPOSE 3000 3001
+CMD ["./start.sh"]
+```
 
-1.  **`postgres`:**
-    *   Uses the `postgres:15-alpine` image.
-    *   Configured with environment variables for the database user, password, and name from a `.env` file.
-    *   A named volume `postgres_data` will be used for data persistence.
-    *   Maps port `5432` to the host.
+## Production `compose.yaml`
 
-2.  **`redis`:**
-    *   Uses the `redis:7-alpine` image.
-    *   A named volume `redis_data` will be used for data persistence.
-    *   Maps port `6379` to the host.
+A `compose.yaml` file will be created to run the application and its dependencies in a production environment.
 
-3.  **`app`:**
-    *   Builds the image from the `Dockerfile` in the current directory.
-    *   Depends on the `postgres` and `redis` services to ensure they start first.
-    *   Maps port `3000` (for the web app) and `3001` (for the socket server) to the host.
-    *   Uses the `.env` file for environment variables.
-    *   Mounts the entire project directory as a volume to `/app` to enable hot-reloading.
+```yaml
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-## Step 3: Instructions for Building and Running
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
 
-The following commands will be used to manage the application with Docker Compose:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - '3000:3000'
+      - '3001:3001'
+    env_file:
+      - .env
 
-*   **Build the images:** `docker-compose build`
-*   **Start the services:** `docker-compose up -d`
-*   **Stop the services:** `docker-compose down`
-*   **View logs:** `docker-compose logs -f`
-
-This plan will result in a fully containerized development environment for the Botify application.
+volumes:
+  postgres_data:
+  redis_data:
+```

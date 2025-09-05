@@ -2,18 +2,25 @@
   "name": "@repo/types",
   "private": true,
   "scripts": {
-    "dev": "tsup types.ts --watch"
+    "dev": "tsup types.ts --watch",
+    "build": "tsup types.ts --format cjs,esm --dts"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "tsup": "^8.0.2"
   },
   "exports": {
-    ".": "./types.ts"
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.mjs",
+      "require": "./dist/types.js"
+    }
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "dependencies": {
+    "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "ioredis": "^5.7.0",
     "libphonenumber-js": "^1.12.10",

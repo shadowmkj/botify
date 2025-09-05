@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+
 import { useState } from "react"
 import z from "zod";
 import { phoneNumberSchema } from "@repo/types";
@@ -29,7 +29,7 @@ const AddContactDialog = ({ groupId }: { groupId: string }) => {
     try {
       await addContact({ name: data.name, phone: data.phone, groupId: groupId })
       toast.success("Contact added successfully!")
-    } catch (err) {
+    } catch {
       toast.error("Error adding contact!")
     } finally {
       setAddDialogOpen(false)
@@ -45,7 +45,7 @@ const AddContactDialog = ({ groupId }: { groupId: string }) => {
         <DialogHeader>
           <DialogTitle>Add New Contact</DialogTitle>
           <DialogDescription>
-            Enter the details below. Click save when you're done.
+            Enter the details below. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

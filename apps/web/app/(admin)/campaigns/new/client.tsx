@@ -32,7 +32,7 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
     try {
       await createCampaign(values)
       toast.success("Campaign Created!")
-    } catch (err) {
+    } catch {
       toast.error("Error creating campaign!")
     }
     form.reset();

@@ -19,7 +19,10 @@ const CampaignsPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  const campaigns = await getCampaigns(session?.user?.id!);
+  if (!session?.user?.id) {
+    return <div>Not authorized</div>
+  }
+  const campaigns = await getCampaigns(session.user.id);
 
   return (
     <div className="space-y-8">

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useDeviceStore } from "@/store/device-store"
 import { useQuery } from "@tanstack/react-query"
-import { BookUser, FilePen, LayoutDashboard, Reply, Send, TabletSmartphoneIcon } from "lucide-react"
+import { BookUser, FilePen, LayoutDashboard, Reply, Send, TabletSmartphoneIcon, Users } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect } from "react"
@@ -30,7 +30,7 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
   });
   useEffect(() => {
     setInitialState(devices?.map((device) => device.body) || []);
-  }, [])
+  }, [devices, setInitialState])
   const pathname = usePathname();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
@@ -104,6 +104,16 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
                   <FilePen />
                 </div>
                 <span className={`text-sm font-medium`}>Campaigns</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton isActive={pathname.startsWith('/group-extraction')} size="lg">
+              <Link href="/group-extraction" className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                  <Users />
+                </div>
+                <span className={`text-sm font-medium`}>Group Extraction</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

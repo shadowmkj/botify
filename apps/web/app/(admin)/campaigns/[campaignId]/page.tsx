@@ -76,6 +76,14 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
             <p className="text-lg">{new Date(campaign.createdAt).toLocaleDateString()}</p>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {campaign.blasts.filter((blast) => blast.status === "Sent").length} / {campaign.blasts.length}
+          </CardContent>
+        </Card>
       </div>
 
       <h2 className="text-2xl font-bold mt-10 mb-4 text-primary">Campaign Blasts</h2>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, MessageSquareText, Plus, Grip, Trash2, QrCodeIcon } from 'lucide-react';
+import { Users, MessageSquareText, QrCodeIcon } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { TableHeader, TableRow, TableHead, TableBody, TableCell, Table } from '@/components/ui/table';
@@ -8,7 +8,7 @@ import { prisma } from '@repo/db';
 import { auth } from '@/lib/auth';
 import { headers } from 'next/headers';
 import AddDeviceModal from '@/components/add-device-modal';
-import { deleteDevice } from '@/actions/device';
+
 import DeleteDeviceButton from '@/components/delete-device';
 import Link from 'next/link';
 

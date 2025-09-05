@@ -9,7 +9,7 @@ const NewCampaignPage = async () => {
   })
   const groups = await prisma.contactGroup.findMany({
     where: {
-      userId: session?.user?.id!
+      userId: session?.user?.id
     }
   })
   return (

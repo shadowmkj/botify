@@ -35,7 +35,7 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     }
   })
 
-  group?.contacts.map(async (contact) => {
+  await Promise.all(group?.contacts.map(async (contact) => {
     await prisma.blast.create({
       data: {
         type: "Campaign",
@@ -44,7 +44,7 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
         contactId: contact.id
       }
     })
-  })
+  }) || [])
 
   const q = new Queue<WhatsappJob>(QUEUE_NAME, {
     connection: redis

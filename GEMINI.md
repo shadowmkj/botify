@@ -61,3 +61,4 @@ This is a monorepo for a WhatsApp automation tool called Botify. It's built with
 ## [!IMPORTANT]
 1. Always use ShadCN components for UI consistency.
 2. Always make sure the commit messages is clear and concise.
+3. Do not ask to run bun dev after implementing a solution. I will run it manually  

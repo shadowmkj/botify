@@ -3,7 +3,7 @@ import Footer from "@/components/footer";
 import Navbar from "@/components/navbar";
 import { UserProvider } from "@/context/UserContext";
 import { auth } from "@/lib/auth";
-import { QueryProvider } from "@/providers/query-provider";
+
 import { headers } from "next/headers";
 
 export default async function HomeLayout({

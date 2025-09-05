@@ -14,7 +14,7 @@
     "postinstall": "prisma generate"
   },
   "exports": {
-    ".": "./prisma.ts"
+    ".": "./prisma.js"
   },
   "dependencies": {
     "@prisma/client": "^6.5.0"

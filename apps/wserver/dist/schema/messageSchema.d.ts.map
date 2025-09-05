@@ -1,1 +1,1 @@
-{"version":3,"file":"messageSchema.d.ts","sourceRoot":"","sources":["../../src/schema/messageSchema.ts"],"names":[],"mappings":"AAAA,OAAO,CAAC,MAAM,KAAK,CAAC;AAEpB,eAAO,MAAM,cAAc;;;;;;;;;;;;;;;EASzB,CAAC;AAEH,MAAM,MAAM,YAAY,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,cAAc,CAAC,CAAC"}
+{"version":3,"file":"messageSchema.d.ts","sourceRoot":"","sources":["../../src/schema/messageSchema.ts"],"names":[],"mappings":"AAAA,OAAO,CAAC,MAAM,KAAK,CAAC;AAEpB,eAAO,MAAM,cAAc;;;;;iBASzB,CAAC;AAEH,MAAM,MAAM,YAAY,GAAG,CAAC,CAAC,KAAK,CAAC,OAAO,cAAc,CAAC,CAAC"}

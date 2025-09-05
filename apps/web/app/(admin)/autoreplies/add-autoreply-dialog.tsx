@@ -32,7 +32,7 @@ const AddAutoReplyDialog = () => {
       await addAutoreply({ ...data, deviceNumber: currentDevice! });
       toast.success("Autoreply added successfully!");
       router.refresh();
-    } catch (error) {
+    } catch {
       toast.error("Failed to add autoreply. Please try again.");
     }
     setAddDialogOpen(false);
@@ -47,7 +47,7 @@ const AddAutoReplyDialog = () => {
         <DialogHeader>
           <DialogTitle>Add New Autoreply</DialogTitle>
           <DialogDescription>
-            Enter the details below. Click save when you're done.
+            Enter the details below. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

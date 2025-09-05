@@ -75,7 +75,7 @@ export const columns: ColumnDef<Campaign>[] = [
         try {
           await deleteCampaign(campaign.id)
           toast.success("Campaign deleted successfully!")
-        } catch (error) {
+        } catch {
           toast.error("Failed to delete campaign.")
         }
         setIsDialogOpen(false)

@@ -4,16 +4,6 @@ export declare const sendTextSchema: z.ZodObject<{
     number: z.ZodString;
     text: z.ZodString;
     type: z.ZodOptional<z.ZodString>;
-}, "strip", z.ZodTypeAny, {
-    number: string;
-    text: string;
-    token: string;
-    type?: string | undefined;
-}, {
-    number: string;
-    text: string;
-    token: string;
-    type?: string | undefined;
-}>;
+}, z.core.$strip>;
 export type sendTextType = z.infer<typeof sendTextSchema>;
 //# sourceMappingURL=messageSchema.d.ts.map

@@ -1,7 +1,7 @@
 import { Code, Database, Layers, Lock, Zap } from 'lucide-react'
 import React from 'react'
 import { Badge } from './ui/badge'
-import { Card } from './ui/card'
+
 import FadeInView from './animate-ui/fade-in-view';
 
 
@@ -52,13 +52,14 @@ export default function TechStackSection() {
             </p>
          </FadeInView>
 
-         <Card className="grid divide-x divide-y overflow-hidden rounded-3xl border border-card sm:grid-cols-2 lg:grid-cols-3 lg:divide-y-0">
+         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {stack.map((item, index) => (
                <FadeInView
                   key={index}
                   delay={0.1 * (index + 2)}
-                  className="group relative transition-shadow duration-300 hover:z-[1] hover:shadow-2xl hover:shadow-primary"
+                  className="group relative transition-shadow duration-300 hover:z-[1] hover:shadow-2xl hover:shadow-primary rounded-3xl border border-card overflow-hidden"
                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <div className="relative space-y-8 py-12 p-8">
                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
                         {item.icon}
@@ -74,7 +75,7 @@ export default function TechStackSection() {
                   </div>
                </FadeInView>
             ))}
-         </Card>
+         </div>
       </section>
    )
 }

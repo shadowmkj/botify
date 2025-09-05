@@ -3,7 +3,7 @@ import { logoutDevice } from "@/actions/device";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SocketEvent, WhatsappJob } from '@repo/types';
+import { SocketEvent } from '@repo/types';
 import Image from 'next/image';
 import { use, useEffect, useState } from 'react';
 import QRCode from 'react-qr-code';
@@ -52,7 +52,7 @@ const WhatsappScannerPage = ({ params }: {
     return () => {
       if (socket) socket.disconnect();
     };
-  }, []);
+  }, [sessionId]);
 
   const handleLogout = async () => {
     await logoutDevice(sessionId)
@@ -111,7 +111,7 @@ const WhatsappScannerPage = ({ params }: {
               </Avatar>
               <div className="text-center">
                 <h2 className="text-xl font-semibold">{userInfo.name}</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400 italic">"{userInfo.status}"</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 italic">&quot;{userInfo.status}&quot;</p>
               </div>
             </div>
             <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">

@@ -1,13 +1,13 @@
 {
   "name": "@botify/wserver",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "worker.js",
   "scripts": {
-    "start": "node dist/index.js",
+    "start": "node dist/worker.js",
     "dev": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "lint": "eslint ./src",
-    "build": "rimraf ./dist && tsc",
+    "build": "tsup src/worker.ts --format cjs,esm --dts",
     "q": "ts-node src/test.ts",
     "send": "ts-node src/send-message.ts",
     "test": "jest --detectOpenHandles --forceExit"
@@ -28,6 +28,7 @@
     "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsup": "^8.0.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {

@@ -1,8 +1,7 @@
 
 import { Suspense } from "react";
 import { prisma } from "@repo/db";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+
 import AddContactDialog from "../dialog";
 import { TableSkeleton } from "../table-skeleton";
 import ContactsTable from "./contact-table";
@@ -27,9 +26,6 @@ const ContactsPage = async ({ params }: { params: Promise<{ id: string }> }) => 
 }
 
 const ContactsServerComponent = async ({ id }: { id: string }) => {
-  const session = await auth.api.getSession({
-    headers: await headers()
-  })
   const contacts = await prisma.contact.findMany({
     where: {
       contactGroupId: id

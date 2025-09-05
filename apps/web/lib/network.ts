@@ -1,11 +1,11 @@
-export const sendSuccessResponse = (data: any) => {
+export const sendSuccessResponse = <T>(data: T) => {
   return {
     status: true,
     data: data
   }
 }
 
-export const sendErrorResponse = (data: any) => {
+export const sendErrorResponse = <T>(data: T) => {
   return {
     status: false,
     data: data

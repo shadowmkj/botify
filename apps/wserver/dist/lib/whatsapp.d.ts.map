@@ -1,1 +1,1 @@
-{"version":3,"file":"whatsapp.d.ts","sourceRoot":"","sources":["../../src/lib/whatsapp.ts"],"names":[],"mappings":"AAAA,OAAqB,EAA4E,QAAQ,EAAE,MAAM,SAAS,CAAC;AAW3H,wBAAsB,oBAAoB,CAAC,MAAM,EAAE,MAAM,GAAG,OAAO,CAAC,QAAQ,CAAC,CAsF5E"}
+{"version":3,"file":"whatsapp.d.ts","sourceRoot":"","sources":["../../src/lib/whatsapp.ts"],"names":[],"mappings":"AAAA,OAAqB,EAA4E,QAAQ,EAAE,MAAM,SAAS,CAAC;AAW3H,wBAAsB,oBAAoB,CAAC,MAAM,EAAE,MAAM,GAAG,OAAO,CAAC,QAAQ,CAAC,CAuF5E"}

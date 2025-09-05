@@ -9,6 +9,9 @@ import logger from './utils/logger';
 import { redis } from './utils/redis';
 export const sessions = new Map();
 export const msgRetryCounterCache = new NodeCache();
+const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
+  connection: redis,
+});
 
 new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
   logger.info(`Processing job: ${job.name} for session: ${job.data.sender}`);
@@ -113,9 +116,6 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
       if (!campaign) {
         break;
       }
-      const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-        connection: redis,
-      })
       await queue.addBulk(
         campaign.blasts.map((blast) => {
           return {
@@ -147,9 +147,6 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
 
 async function initializeWorker() {
   logger.info('WhatsApp worker initialized');
-  const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis,
-  })
   const numbers = await prisma.device.findMany();
   numbers.forEach(number => {
     queue.add('connect-whatsapp', { sender: number.body, type: 'connect-whatsapp' }, {

@@ -12,6 +12,7 @@ const log = (0, pino_1.default)({
     transport: {
         target: "pino-pretty",
     },
+    enabled: process.env.NODE_ENV !== "production",
     base: {
         pid: false,
     },

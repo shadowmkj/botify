@@ -16,12 +16,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useDeviceStore } from "@/store/device-store";
 import { Autoreply } from "@repo/db";
 import { MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 export default function AutoreplyTable({ initialAutoreplies }: { initialAutoreplies: Autoreply[] }) {
-  const { device: currentDevice } = useDeviceStore()
   const [autoreplys, setAutoreplys] = useState<Autoreply[]>(initialAutoreplies);
   const handleEditAutoreply = (autoreplyId: string) => {
     alert(`Edit action for autoreply ID: ${autoreplyId}`);

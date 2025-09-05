@@ -1,7 +1,6 @@
 import type { IUpsert } from "./types/bailey";
 import { Queue } from "bullmq";
 import { redis } from "./utils/redis";
-import { IMessage } from "./utils/message";
 import { QUEUE_NAME } from "./utils/constants";
 import { WhatsappJob } from "@repo/types";
 import { prisma } from "@repo/db";
