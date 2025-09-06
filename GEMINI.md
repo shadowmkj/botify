@@ -64,3 +64,6 @@ This is a monorepo for a WhatsApp automation tool called Botify. It's built with
 1. Always use ShadCN components for UI consistency.
 2. Always make sure the commit messages is clear and concise.
 3. Do not ask to run bun dev after implementing a solution. I will run it manually  
+4. Make sure all task planning documents (md) files are created in the ai_docs folder.
+5. Make sure all research documents (md) files are created in the ai_docs/research folder.
+6. When I say document, I usually means markdown files (md).
