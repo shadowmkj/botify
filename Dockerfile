@@ -1,60 +1,70 @@
-
 # Dockerfile
 
 # --- Base Stage ---
-# Sets up the basic environment and installs bun.
-FROM oven/bun:1.0-slim as base
+# Use the official Node.js image which includes npm and npx.
+FROM node:20-slim as base
 WORKDIR /app
-ENV BUN_INSTALL_CACHE_DIR=~/.bun/install/cache
+
+# Install pnpm and turbo globally
+RUN npm install -g pnpm turbo
 
 # --- Pruner Stage ---
-# Responsible for creating the pruned, isolated monorepo subset.
+# This stage selectively copies only the files needed to compute the dependency tree
+# and run `turbo prune`.
 FROM base as pruner
-COPY . .
-# Prune the monorepo to get only the files needed for the target app.
-# The APP_NAME is passed in as a build argument from the GitHub Actions workflow.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps ./apps
+COPY packages ./packages
+
+# Prune the monorepo to get only the files needed for the target application.
 ARG APP_NAME
-RUN bun turbo prune --scope=${APP_NAME} --docker
+RUN turbo prune --scope=${APP_NAME} --docker
 
 # --- Installer Stage ---
-# Installs dependencies based on the pruned lockfile. This layer is highly cacheable.
+# This stage installs dependencies based on the pruned workspace.
 FROM base as installer
+WORKDIR /app
+
+# Copy the pruned package manifests and lockfile.
 COPY --from=pruner /app/out/json/ ./
-COPY --from=pruner /app/out/bun.lockb ./bun.lockb
-RUN bun install --frozen-lockfile
+COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Install production-only dependencies.
+RUN pnpm install --frozen-lockfile
 
 # --- Builder Stage ---
-# Builds the actual application code.
+# This stage builds the actual application code.
 FROM base as builder
+WORKDIR /app
 ARG APP_NAME
+
+# Copy dependencies and the pruned source code.
 COPY --from=installer /app/node_modules ./node_modules
 COPY --from=pruner /app/out/full/ ./
-# This build step now implicitly runs `prisma generate` first.
-RUN bun turbo run build --filter=${APP_NAME}...
+
+# Build the application.
+RUN turbo run build --filter=${APP_NAME}...
 
 # --- Runner Stage ---
-# Creates the final, minimal production image.
+# This is the final, minimal production image.
 FROM base as runner
 WORKDIR /app
 ARG APP_NAME
 
-# Copy production node_modules
+# Copy production node_modules from the installer stage.
 COPY --from=installer /app/node_modules ./node_modules
 
 # Copy the Prisma schema and migration files for runtime use.
-# This is CRITICAL for running `prisma migrate deploy`.
 COPY --from=builder /app/packages/db/prisma/schema.prisma ./packages/db/prisma/
 COPY --from=builder /app/packages/db/prisma/migrations ./packages/db/prisma/migrations
 
-# Copy the built application code
-COPY --from=builder /app/apps/${APP_NAME}/dist ./apps/${APP_NAME}/dist
+# Copy the built application code.
 COPY --from=builder /app/apps/web/.next/standalone ./apps/web/
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Copy and use the robust start script
+# Copy and use the robust start script.
 COPY start.sh .
 RUN chmod +x ./start.sh
 
-# Expose the port and set the entrypoint
 EXPOSE 3000
 CMD ["./start.sh"]

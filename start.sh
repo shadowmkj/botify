@@ -7,7 +7,7 @@ echo "Starting Botify..."
 # This command is safe to run on every start. It applies pending
 # migrations and does nothing if the database is up-to-date.
 echo "Running database migrations..."
-bunx prisma migrate deploy
+pnpm dlx prisma migrate deploy
 
 # 2. Start the correct application based on an environment variable
 # The APP_NAME will be passed into the container at runtime.
