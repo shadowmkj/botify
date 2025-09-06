@@ -37,7 +37,7 @@ jobs:
       - name: Remove node_modules
         run: |
           find . -name "node_modules" -type d -prune | while read -r d; do
-            if [ "$d" != "./apps/web/node_modules" ]; then
+            if [ "$d" != "./node_modules" ]; then
               rm -rf "$d"
             fi
           done
