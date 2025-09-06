@@ -1,1 +1,0 @@
-{"version":3,"file":"bailey.d.ts","sourceRoot":"","sources":["../../src/types/bailey.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,KAAK,EAAE,iBAAiB,EAAE,MAAM,SAAS,CAAC;AACxD,MAAM,WAAW,OAAO;IACtB,QAAQ,EAAE,KAAK,CAAC,eAAe,EAAE,CAAC;IAClC,IAAI,EAAE,iBAAiB,CAAC;CACzB"}
