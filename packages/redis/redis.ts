@@ -2,17 +2,17 @@
 import Redis from 'ioredis';
 
 export const redis = new Redis({
-  port: 6379,
-  host: "localhost",
-  // password: "O3dtw8l8mkxs7iJGz2JQLxwHainPsQch",
+  port: Number(process.env.REDIS_PORT) || 6379,
+  host: process.env.REDIS_HOST || "localhost",
+  // password: process.env.REDIS_PASSWORD,
   db: 0, // Defaults to 0
   maxRetriesPerRequest: null
 })
 
 export const subscriber = new Redis({
-  port: 6379,
-  host: "localhost",
-  // password: "O3dtw8l8mkxs7iJGz2JQLxwHainPsQch",
+  port: Number(process.env.REDIS_PORT) || 6379,
+  host: process.env.REDIS_HOST || "localhost",
+  // password: process.env.REDIS_PASSWORD,
   db: 0, // Defaults to 0
   maxRetriesPerRequest: null
 })
