@@ -1,9 +1,9 @@
-name: Build and Push Docker Images
+name: Build and Push Single Docker Image
 
 on:
   push:
     branches:
-      - main # Or your primary branch
+      - main
 
 jobs:
   build-and-push:
@@ -23,26 +23,10 @@ jobs:
           username: iamshadow666
           password: ${{ secrets.CR_PAT }}
 
-      - name: Build and push web image
+      - name: Build and push application image
         uses: docker/build-push-action@v5
         with:
           context: .
-          dockerfile: apps/web/Dockerfile
+          dockerfile: Dockerfile.prod
           push: true
-          tags: ghcr.io/iamshadow666/botify-web:latest
-
-      - name: Build and push wserver image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          dockerfile: apps/wserver/Dockerfile
-          push: true
-          tags: ghcr.io/iamshadow666/botify-wserver:latest
-
-      - name: Build and push socket image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          dockerfile: apps/socket/Dockerfile
-          push: true
-          tags: ghcr.io/iamshadow666/botify-socket:latest
+          tags: ghcr.io/iamshadow666/botify-app:latest
