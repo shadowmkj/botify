@@ -20,8 +20,6 @@
       "require": "./dist/index.js"
     }
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "dependencies": {
     "@prisma/client": "^6.5.0"
   },
