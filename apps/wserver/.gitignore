@@ -3,3 +3,5 @@ node_modules/
 [0-9]*
 baileys_store_multi.json
 dist
+
+.env
