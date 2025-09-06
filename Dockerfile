@@ -28,4 +28,4 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/start.sh .
 RUN chmod +x start.sh
 EXPOSE 3000 3001
-CMD ["./start.sh"]
+CMD ["bun", "run", "start"]
