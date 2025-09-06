@@ -25,7 +25,6 @@ COPY --from=builder /app/apps/web/.next ./apps/web/.next
 COPY --from=builder /app/apps/socket/dist ./apps/socket/dist
 COPY --from=builder /app/apps/wserver/dist ./apps/wserver/dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/start.sh .
-RUN chmod +x start.sh
+COPY --from=builder /app/package.json ./
 EXPOSE 3000 3001
 CMD ["./start.sh"]
