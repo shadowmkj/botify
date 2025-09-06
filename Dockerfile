@@ -1,11 +1,8 @@
-# Base Stage
-FROM oven/bun:1 as base
+# Builder Stage
+FROM oven/bun:1 as builder
 RUN apt-get update -y && apt-get install -y openssl
 RUN bun add -g turbo
 WORKDIR /app
-
-# Dependencies Stage
-FROM base as deps
 COPY package.json bun.lock turbo.json ./
 COPY apps/socket/package.json ./apps/socket/
 COPY apps/web/package.json ./apps/web/
@@ -16,16 +13,19 @@ COPY packages/redis/package.json ./packages/redis/
 COPY packages/types/package.json ./packages/types/
 COPY packages/typescript-config/package.json ./packages/typescript-config/
 RUN bun install --frozen-lockfile
-
-# Build Stage
-FROM deps as builder
 COPY . .
 RUN turbo run build
 
 # Runner Stage
-FROM base as runner
-COPY --from=builder /app .
-COPY --from=deps /app/node_modules ./node_modules
-
+FROM node:20-slim as runner
+WORKDIR /app
+ENV NODE_ENV=production
+COPY --from=builder /app/apps/web/package.json ./apps/web/
+COPY --from=builder /app/apps/web/.next ./apps/web/.next
+COPY --from=builder /app/apps/socket/dist ./apps/socket/dist
+COPY --from=builder /app/apps/wserver/dist ./apps/wserver/dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/start.sh .
+RUN chmod +x start.sh
 EXPOSE 3000 3001
-CMD ["bun", "run", "dev"]
+CMD ["./start.sh"]
