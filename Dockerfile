@@ -18,6 +18,8 @@ RUN turbo run build
 
 # Runner Stage
 FROM oven/bun:1 as runner
+RUN apt-get update -y && apt-get install -y openssl
+RUN bun add -g turbo
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/apps/web/package.json ./apps/web/
