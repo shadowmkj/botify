@@ -25,5 +25,8 @@
     "ts-jest": "^29.4.1",
     "turbo": "latest"
   },
-  "packageManager": "bun@1.2.19"
+  "packageManager": "bun@1.2.19",
+  "dependencies": {
+    "dotenv": "^17.2.2"
+  }
 }

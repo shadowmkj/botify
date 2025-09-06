@@ -92,7 +92,6 @@ export async function startWhatsAppSession(number: string): Promise<WASocket> {
   });
   sock.ev.on('creds.update', saveCreds);
   sock.ev.on('messages.upsert', async (m) => {
-    const i = await sock.groupFetchAllParticipating()
     initAutoreply(m, number)
   })
   return sock;

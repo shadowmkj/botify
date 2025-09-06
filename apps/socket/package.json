@@ -3,8 +3,8 @@
   "module": "socket.ts",
   "scripts": {
     "build": "tsup server.ts --format cjs,esm --dts",
-    "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "start": "DOTENV_CONFIG_PATH=../../.env node -r dotenv/config dist/server.js",
+    "dev": "DOTENV_CONFIG_PATH=../.env ts-node-dev --respawn --transpile-only server.ts",
     "test": "jest --detectOpenHandles --forceExit"
   },
   "devDependencies": {

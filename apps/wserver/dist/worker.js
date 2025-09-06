@@ -155,7 +155,7 @@ var import_db = require("@repo/db");
 var updateDeviceStatus = async (number, status) => {
   const { data: validatedNumber, success } = import_types.phoneNumberSchema.safeParse(number);
   if (!success) {
-    throw new Error(`Invalid phone number format: ${number}`);
+    logger_default.error(`Invalid phone number format: ${number}`);
   }
   const update = await import_db.prisma.device.update({
     data: {
@@ -287,7 +287,6 @@ async function startWhatsAppSession(number) {
   });
   sock.ev.on("creds.update", saveCreds);
   sock.ev.on("messages.upsert", async (m) => {
-    const i = await sock.groupFetchAllParticipating();
     autoreply_default(m, number);
   });
   return sock;

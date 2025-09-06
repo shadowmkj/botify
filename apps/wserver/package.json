@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "worker.js",
   "scripts": {
-    "start": "node dist/worker.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/worker.ts",
+    "start": "DOTENV_CONFIG_PATH=../../.env node -r dotenv/config dist/worker.js",
+    "dev": "DOTENV_CONFIG_PATH=../../.env ts-node-dev --respawn --transpile-only src/worker.ts",
     "worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "lint": "eslint ./src",
     "build": "tsup src/worker.ts --format cjs,esm --dts",
