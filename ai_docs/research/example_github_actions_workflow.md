@@ -73,7 +73,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/iamshadow666/${{ env.IMAGE_NAME }}
 
       # This action builds the image using the pruned context and pushes it.
       - name: Build and push Docker image

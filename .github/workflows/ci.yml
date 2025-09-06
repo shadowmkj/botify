@@ -1,0 +1,42 @@
+
+# .github/workflows/ci.yml
+
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetch the main branch history for accurate change detection.
+          fetch-depth: 0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Cache bun dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
+          restore-keys: |
+            ${{ runner.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # The filter "...[origin/main]" tells Turbo to run tasks only on
+      # workspaces affected by the changes in the pull request.
+      - name: Run Builds on Affected Workspaces
+        # This will now automatically run `prisma generate` first due to the
+        # dependency in turbo.json, ensuring the client is available for builds.
+        run: bun turbo run build --filter="...[origin/main]"

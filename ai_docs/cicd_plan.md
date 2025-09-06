@@ -161,7 +161,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/botify-web
+          images: ghcr.io/iamshadow666/botify-web
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

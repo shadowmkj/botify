@@ -1,35 +1,47 @@
+# compose.yaml for Production
+
+version: '3.8'
+
 services:
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15
     restart: always
     environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=botify
-    ports:
-      - '5432:5432'
+      # These variables are used by the postgres container itself.
+      # You can set them in the 'production.env' file for clarity.
+      POSTGRES_USER: ${POSTGRES_USER:-user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-botify}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # Exposing the port is optional. Only do this if you need to connect
+    # to the database from outside the VPS. For security, it's better to keep it closed.
+    # ports:
+    #   - "5432:5432"
 
   redis:
     image: redis:7-alpine
     restart: always
-    ports:
-      - '6379:6379'
     volumes:
       - redis_data:/data
+    # Exposing the port is optional and generally not recommended for security.
+    # ports:
+    #   - "6379:6379"
 
   app:
-    image: ghcr.io/iamshadow666/botify-app:latest
+    # This tells Docker Compose to pull the 'latest' tag of your image from GHCR.
+    # It will not try to build anything.
+    image: ghcr.io/iamshadow666/botify-web:latest
     restart: always
+    ports:
+      - "3000:3000"
     depends_on:
       - postgres
       - redis
-    ports:
-      - '3000:3000'
-      - '3001:3001'
+    # This tells the 'app' container to load all variables from the
+    # 'production.env' file in the same directory.
     env_file:
-      - .env
+      - production.env
 
 volumes:
   postgres_data:

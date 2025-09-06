@@ -1,61 +1,60 @@
-# --- Stage 1: The Builder ---
-# Use the official Bun image which contains all the necessary tools.
-FROM oven/bun:1.0 as builder
+
+# Dockerfile
+
+# --- Base Stage ---
+# Sets up the basic environment and installs bun.
+FROM oven/bun:1.0-slim as base
 WORKDIR /app
+ENV BUN_INSTALL_CACHE_DIR=~/.bun/install/cache
 
-# Copy only package manifests to leverage Docker layer caching.
-# This layer is only rebuilt if dependency files change.
-COPY bun.lockb ./
-COPY package.json ./
-COPY apps/web/package.json ./apps/web/
-COPY apps/wserver/package.json ./apps/wserver/
-COPY apps/socket/package.json ./apps/socket/
-COPY packages/db/package.json ./packages/db/
-COPY packages/redis/package.json ./packages/redis/
-COPY packages/types/package.json ./packages/types/
+# --- Pruner Stage ---
+# Responsible for creating the pruned, isolated monorepo subset.
+FROM base as pruner
+COPY . .
+# Prune the monorepo to get only the files needed for the target app.
+# The APP_NAME is passed in as a build argument from the GitHub Actions workflow.
+ARG APP_NAME
+RUN bun turbo prune --scope=${APP_NAME} --docker
 
-# Install all dependencies, including devDependencies needed for building.
+# --- Installer Stage ---
+# Installs dependencies based on the pruned lockfile. This layer is highly cacheable.
+FROM base as installer
+COPY --from=pruner /app/out/json/ ./
+COPY --from=pruner /app/out/bun.lockb ./bun.lockb
 RUN bun install --frozen-lockfile
 
-# Copy the rest of the source code.
-COPY . .
+# --- Builder Stage ---
+# Builds the actual application code.
+FROM base as builder
+ARG APP_NAME
+COPY --from=installer /app/node_modules ./node_modules
+COPY --from=pruner /app/out/full/ ./
+# This build step now implicitly runs `prisma generate` first.
+RUN bun turbo run build --filter=${APP_NAME}...
 
-# Generate the Prisma client. This is required before building the app,
-# as the generated client code is imported by the application source.
-RUN bunx prisma generate
-
-# Build all applications in the monorepo using Turborepo.
-RUN bun run build
-
-# --- Stage 2: The Production Image ---
-# Start from a slim image for a smaller final footprint.
-FROM oven/bun:1.0-slim
+# --- Runner Stage ---
+# Creates the final, minimal production image.
+FROM base as runner
 WORKDIR /app
+ARG APP_NAME
 
-# Copy a default .env file. This can be overridden by Docker Compose.
-COPY .example.env ./.env
+# Copy production node_modules
+COPY --from=installer /app/node_modules ./node_modules
 
-# Copy only production node_modules from the builder stage.
-COPY --from=builder /app/node_modules ./node_modules
+# Copy the Prisma schema and migration files for runtime use.
+# This is CRITICAL for running `prisma migrate deploy`.
+COPY --from=builder /app/packages/db/prisma/schema.prisma ./packages/db/prisma/
+COPY --from=builder /app/packages/db/prisma/migrations ./packages/db/prisma/migrations
 
-# Copy Prisma schema and migration files. These are needed at runtime
-# by the entrypoint script to run `prisma migrate deploy`.
-COPY --from=builder /app/packages/db/schema.prisma ./packages/db/
-COPY --from=builder /app/packages/db/migrations ./packages/db/migrations
-
-# Copy the compiled outputs of the backend applications.
-COPY --from=builder /app/apps/wserver/dist ./apps/wserver/dist
-COPY --from=builder /app/apps/socket/dist ./apps/socket/dist
-
-# Copy the self-contained Next.js application.
+# Copy the built application code
+COPY --from=builder /app/apps/${APP_NAME}/dist ./apps/${APP_NAME}/dist
 COPY --from=builder /app/apps/web/.next/standalone ./apps/web/
+COPY --from=builder /app/apps/web/public ./apps/web/public
 
-# Copy and make the entrypoint script executable.
+# Copy and use the robust start script
 COPY start.sh .
 RUN chmod +x ./start.sh
 
-# Document that the container listens on port 3000.
+# Expose the port and set the entrypoint
 EXPOSE 3000
-
-# Set the command to run when the container starts.
 CMD ["./start.sh"]

@@ -1,34 +1,20 @@
 {
   "name": "@repo/db",
   "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
   "scripts": {
-    "build": "DOTENV_CONFIG_PATH=../../.env tsup index.ts --format cjs,esm --dts",
-    "db:migrate:deploy": "dotenv -e ../../.env prisma migrate deploy",
-    "db:migrate:dev": "dotenv -e ../../.env prisma migrate dev",
-    "db:migrate:reset": "dotenv -e ../../.env prisma migrate reset",
-    "db:push": "dotenv -e ../../.env prisma db push",
-    "db:seed": "tsx seed.ts",
-    "dev": "DOTENV_CONFIG_PATH=../../.env tsup index.ts --watch",
-    "format": "dotenv -e ../../.env prisma format",
-    "generate": "dotenv -e ../../.env -- prisma generate",
-    "studio": "dotenv -e ../../.env prisma studio",
-    "postinstall": "dotenv -e ../../.env -- prisma generate"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js"
-    }
+    "build": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0"
+    "@prisma/client": "^5.17.0"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "^20",
-    "dotenv-cli": "10.0.0",
-    "prisma": "^6.5.0",
-    "tsup": "^8.0.2",
-    "typescript": "^5"
+    "prisma": "^5.17.0"
+  },
+  "exports": {
+    ".": "./index.ts"
   }
 }
