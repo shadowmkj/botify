@@ -2,6 +2,8 @@
 
 This document provides context for the Botify project, a WhatsApp automation tool.
 
+Refer to botify_overview.md for a detailed overview of the project architecture, key technologies, and development workflow.
+
 ## Project Overview
 
 This is a monorepo for a WhatsApp automation tool called Botify. It's built with Next.js, Tailwind CSS, and ShadCN for the frontend, and a backend powered by Node.js, Express, and Baileys (a WhatsApp Web API library). The project uses Prisma as an ORM for a PostgreSQL database and Redis for message queuing with BullMQ.

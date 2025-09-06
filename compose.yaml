@@ -19,21 +19,36 @@ services:
     volumes:
       - redis_data:/data
 
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile.prod
+  web:
+    image: ghcr.io/iamshadow666/botify-web:latest
+    restart: always
+    depends_on:
+      - wserver
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+
+  wserver:
+    image: ghcr.io/iamshadow666/botify-wserver:latest
     restart: always
     depends_on:
       - postgres
       - redis
     ports:
-      - '3000:3000'
       - '3001:3001'
     env_file:
       - .env
-    volumes:
-      - .:/app
+
+  socket:
+    image: ghcr.io/iamshadow666/botify-socket:latest
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - '3002:3002' # Assuming port 3002 for the socket server
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
