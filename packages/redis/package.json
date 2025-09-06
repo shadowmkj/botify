@@ -3,10 +3,11 @@
   "private": true,
   "scripts": {
     "dev": "tsup redis.ts --watch",
-    "build": "tsup redis.ts --format cjs,esm --dts"
+    "build": "DOTENV_CONFIG_PATH=../../.env tsup redis.ts --format cjs,esm --dts"
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "dotenv-cli": "^10.0.0",
     "tsup": "^8.0.2"
   },
   "exports": {
