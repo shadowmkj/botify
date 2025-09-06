@@ -32,7 +32,7 @@ jobs:
             ${{ runner.os }}-bun-
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install 
 
       # The filter "...[origin/main]" tells Turbo to run tasks only on
       # workspaces affected by the changes in the pull request.
