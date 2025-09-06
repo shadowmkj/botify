@@ -17,7 +17,7 @@ COPY . .
 RUN turbo run build
 
 # Runner Stage
-FROM node:20-slim as runner
+FROM oven/bun:1 as runner
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=builder /app/apps/web/package.json ./apps/web/
