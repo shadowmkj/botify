@@ -5,29 +5,7 @@ This document summarizes best practices for creating an efficient CI/CD pipeline
 
 ---
 
-## 1. Caching Strategies
-
-Effective caching is the most critical factor for achieving fast CI/CD builds in a monorepo. The goal is to avoid re-running tasks (like `install`, `build`, `test`) on code that has not changed.
-
-### Remote Caching (Recommended)
-
-This is Turborepo's most powerful feature. It shares a single cache for build artifacts across the entire team and, most importantly, across all CI/CD runs.
-
--   **How it works:** After a task is completed, Turborepo uploads the resulting files (`.next`, `dist`, etc.) and logs to a remote cache. Before running a task, it checks if the same task has been run on the same code before. If a cache entry exists, it downloads the artifacts instead of re-executing the task.
--   **Implementation:**
-    -   Use a service like Vercel, which provides a zero-configuration remote cache.
-    -   In GitHub Actions, set `TURBO_TOKEN` and `TURBO_TEAM` as secrets in your repository settings and expose them as environment variables in the workflow file.
-
-### GitHub Actions Cache (Alternative)
-
-If a dedicated remote cache service is not used, you can leverage the built-in GitHub Actions cache.
-
--   **How it works:** Use the `actions/cache` action to save and restore the `.turbo` directory, which contains the local cache artifacts.
--   **Limitation:** This cache is specific to the branch and runner type. It's less effective than a true remote cache because a CI run on a pull request will not benefit from a cache generated on the `main` branch after a previous merge.
-
----
-
-## 2. Selective Builds and Task Execution
+## 1. Selective Builds and Task Execution
 
 Selective building ensures that CI only runs tasks on the parts of the codebase that have actually changed, which is essential for efficiency in a monorepo.
 

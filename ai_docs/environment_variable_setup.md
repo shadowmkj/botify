@@ -98,13 +98,3 @@ After you have SSH'd into your server and cloned the repository, you will create
     Save and exit the editor (Ctrl+X, then Y, then Enter).
 
 ### Step 2: GitHub Secrets for the CI/CD Pipeline
-
-These are **separate** from your application secrets. They live in your GitHub repository settings and give your CI/CD pipeline permission to do things.
-
-1.  **Navigate to your repository on GitHub.**
-2.  Go to **Settings > Secrets and variables > Actions**.
-3.  Ensure the following secrets are created:
-    -   `TURBO_TEAM`: Your Turborepo team ID for remote caching.
-    -   `TURBO_TOKEN`: Your Turborepo access token for remote caching.
-
-These secrets are only used by the GitHub Actions runners and are never exposed to your application code or your VPS.

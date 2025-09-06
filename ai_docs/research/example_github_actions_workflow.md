@@ -21,12 +21,7 @@ on:
     branches:
       - main
 
-env:
-  # The name of the application to build.
-  # This must match the workspace name in package.json and the directory in apps/.
-  APP_NAME: web
-  # The desired name for the final Docker image.
-  IMAGE_NAME: your-image-name
+
 
 jobs:
   build-and-push:
@@ -45,14 +40,7 @@ jobs:
         with:
           bun-version: latest
 
-      # Note: Caching bun install is crucial for speed.
-      - name: Cache bun dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('**/bun.lockb') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+      
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
@@ -87,20 +75,17 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           # Enable Docker layer caching within GitHub Actions.
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          
 ```
 
 ## How It Works: Step-by-Step
 
 1.  **Trigger:** The workflow runs on a `push` to the `main` branch.
 2.  **Setup:** It checks out the code and installs `bun`.
-3.  **Dependency Caching:** It uses `actions/cache` to cache the `bun install` dependencies. The cache is keyed by the hash of the `bun.lockb` file, so dependencies are only re-installed if the lockfile changes.
-4.  **`turbo prune`:** This is the most critical step. It creates a pruned version of the monorepo in an `out/` directory, containing only the code and dependencies needed for the application specified by `APP_NAME`.
-5.  **Docker Login:** It securely logs into GHCR using a temporary `GITHUB_TOKEN` provided by the GitHub Actions runner.
-6.  **Metadata Extraction:** The `docker/metadata-action` generates relevant tags and labels for the Docker image (e.g., `latest`, git SHA, etc.), which is a best practice for versioning.
-7.  **Build and Push:** The `docker/build-push-action` orchestrates the final build and push.
+3.  **`turbo prune`:** This is the most critical step. It creates a pruned version of the monorepo in an `out/` directory, containing only the code and dependencies needed for the application specified by `APP_NAME`.
+4.  **Docker Login:** It securely logs into GHCR using a temporary `GITHUB_TOKEN` provided by the GitHub Actions runner.
+5.  **Metadata Extraction:** The `docker/metadata-action` generates relevant tags and labels for the Docker image (e.g., `latest`, git SHA, etc.), which is a best practice for versioning.
+6.  **Build and Push:** The `docker/build-push-action` orchestrates the final build and push.
     -   `context: .`: The build context is the entire repository root, which is necessary so Docker can see the `out` directory created by `turbo prune`.
     -   `file: ./Dockerfile`: It uses the main `Dockerfile` from the repository root. This `Dockerfile` should be written to work with the pruned `out` directory structure.
     -   `push: true`: Pushes the image to GHCR upon a successful build.
-    -   `cache-from` / `cache-to`: Enables caching of the Docker image layers directly within the GitHub Actions cache, speeding up subsequent builds.

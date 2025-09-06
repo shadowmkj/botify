@@ -15,46 +15,7 @@ This document outlines a comprehensive CI/CD strategy for the Botify monorepo, l
 
 ---
 
-### Phase 1: Codebase Adjustments for Prisma
-
-To ensure Prisma works reliably in a monorepo and inside Docker, we need to make a small adjustment to the `packages/db` workspace.
-
-**Action:**
-
-1.  **Define a `build` script for the `db` package.** This script will be responsible for running `prisma generate`.
-    -   **File:** `packages/db/package.json`
-    ```json
-    {
-      "name": "@repo/db",
-      "version": "1.0.0",
-      "private": true,
-      "main": "index.ts",
-      "scripts": {
-        "build": "prisma generate",
-        "db:push": "prisma db push",
-        "db:studio": "prisma studio"
-      },
-      // ... rest of the file
-    }
-    ```
-2.  **Make application builds dependent on Prisma generation.** In the root `turbo.json`, we will ensure that `prisma generate` is always run before any application is built.
-    -   **File:** `turbo.json`
-    ```json
-    {
-      "$schema": "https://turbo.build/schema.json",
-      "pipeline": {
-        "build": {
-          "dependsOn": ["^build", "@repo/db#build"],
-          "outputs": ["dist/**", ".next/**"]
-        },
-        // ... rest of the file
-      }
-    }
-    ```
-
----
-
-### Phase 2: Continuous Integration (CI) Workflow
+### Phase 1: Continuous Integration (CI) Workflow
 
 This workflow runs on every pull request. It will now also ensure the Prisma client is generated correctly.
 
