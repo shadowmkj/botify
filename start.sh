@@ -13,7 +13,7 @@ bunx prisma migrate deploy
 # The APP_NAME will be passed into the container at runtime.
 echo "Starting application: $APP_NAME"
 
-if [ "$APP_NAME" = "web" ]; then
+if [ "$APP_NAME" = "@botify/web" ]; then
   exec node apps/web/server.js
 elif [ "$APP_NAME" = "wserver" ]; then
   exec node apps/wserver/dist/index.js
