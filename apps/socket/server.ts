@@ -5,7 +5,10 @@ import * as dotenv from 'dotenv';
 import { prisma } from "@repo/db"
 import { Queue } from 'bullmq'; // Ensure you have bullmq installed
 import { WhatsappJob } from '@repo/types';
-dotenv.config(); // Load environment variables from .env file
+dotenv.config({
+  path: '../../.env'
+}); // Load environment variables from .env file
+console.log(process.env.REDIS_HOST)
 const QUEUE_NAME: string = process.env.QUEUE_NAME || 'whatsapp-jobs';
 const SOCKET_PORT: number = parseInt(process.env.SOCKET_PORT || '3001', 10);
 const NEXTJS_URL: string = process.env.NEXTJS_URL || 'http://localhost:3000';

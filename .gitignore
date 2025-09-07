@@ -51,3 +51,4 @@ next-env.d.ts
 gha-creds-*.json
 
 .env
+.env.local

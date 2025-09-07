@@ -2,19 +2,25 @@
   "name": "@repo/db",
   "version": "1.0.0",
   "private": true,
-  "main": "index.ts",
   "scripts": {
-    "build": "prisma generate",
+    "build": "tsup index.ts --format cjs,esm --dts",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "^5.17.0"
+    "@prisma/client": "5.17.0"
   },
   "devDependencies": {
-    "prisma": "^5.17.0"
+    "prisma": "5.17.0",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.5",
+    "@repo/typescript-config": "workspace:*"
   },
   "exports": {
-    ".": "./index.ts"
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
   }
 }

@@ -30,6 +30,9 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@repo/types':
         specifier: workspace:*
         version: link:../../packages/types
@@ -52,12 +55,18 @@ importers:
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
+      dotenv-cli:
+        specifier: ^10.0.0
+        version: 10.0.0
       jest:
         specifier: ^30.1.1
         version: 30.1.3(@types/node@20.19.13)(ts-node@10.9.2(@types/node@20.19.13)(typescript@5.9.2))
       ts-jest:
         specifier: ^29.4.1
         version: 29.4.1(@babel/core@7.28.4)(@jest/transform@30.1.2)(@jest/types@30.0.5)(babel-jest@30.1.2(@babel/core@7.28.4))(esbuild@0.25.9)(jest-util@30.0.5)(jest@30.1.3(@types/node@20.19.13)(ts-node@10.9.2(@types/node@20.19.13)(typescript@5.9.2)))(typescript@5.9.2)
+      ts-node-dev:
+        specifier: ^2.0.0
+        version: 2.0.0(@types/node@20.19.13)(typescript@5.9.2)
       tsup:
         specifier: ^8.0.2
         version: 8.5.0(jiti@2.5.1)(postcss@8.5.6)(typescript@5.9.2)
@@ -148,6 +157,12 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
+      '@repo/types':
+        specifier: workspace:*
+        version: link:../../packages/types
       '@tabler/icons-react':
         specifier: ^3.34.1
         version: 3.34.1(react@19.1.1)
@@ -299,6 +314,9 @@ importers:
       '@types/react-dom':
         specifier: ^19
         version: 19.1.9(@types/react@19.1.12)
+      dotenv-cli:
+        specifier: ^10.0.0
+        version: 10.0.0
       eslint:
         specifier: ^9
         version: 9.35.0(jiti@2.5.1)
@@ -332,9 +350,15 @@ importers:
       '@repo/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@repo/redis':
+        specifier: workspace:*
+        version: link:../../packages/redis
       '@repo/types':
         specifier: workspace:*
         version: link:../../packages/types
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
       '@types/body-parser':
         specifier: ^1.19.6
         version: 1.19.6
@@ -411,6 +435,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.38.0
         version: 8.42.0(eslint@9.35.0(jiti@2.5.1))(typescript@5.9.2)
+      dotenv-cli:
+        specifier: ^10.0.0
+        version: 10.0.0
       eslint:
         specifier: ^9.32.0
         version: 9.35.0(jiti@2.5.1)
@@ -439,12 +466,21 @@ importers:
   packages/db:
     dependencies:
       '@prisma/client':
-        specifier: ^5.17.0
-        version: 5.22.0(prisma@5.22.0)
+        specifier: 5.17.0
+        version: 5.17.0(prisma@5.17.0)
     devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
       prisma:
-        specifier: ^5.17.0
-        version: 5.22.0
+        specifier: 5.17.0
+        version: 5.17.0
+      tsup:
+        specifier: ^8.0.2
+        version: 8.5.0(jiti@2.5.1)(postcss@8.5.6)(typescript@5.9.2)
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.2
 
   packages/redis:
     dependencies:
@@ -1366,8 +1402,8 @@ packages:
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
-  '@prisma/client@5.22.0':
-    resolution: {integrity: sha512-M0SVXfyHnQREBKxCgyo7sffrKttwE6R8PMq330MIUF0pTwjUhLbW84pFDlf06B27XyCR++VtjugEnIHdr07SVA==}
+  '@prisma/client@5.17.0':
+    resolution: {integrity: sha512-N2tnyKayT0Zf7mHjwEyE8iG7FwTmXDHFZ1GnNhQp0pJUObsuel4ZZ1XwfuAYkq5mRIiC/Kot0kt0tGCfLJ70Jw==}
     engines: {node: '>=16.13'}
     peerDependencies:
       prisma: '*'
@@ -1375,20 +1411,20 @@ packages:
       prisma:
         optional: true
 
-  '@prisma/debug@5.22.0':
-    resolution: {integrity: sha512-AUt44v3YJeggO2ZU5BkXI7M4hu9BF2zzH2iF2V5pyXT/lRTyWiElZ7It+bRH1EshoMRxHgpYg4VB6rCM+mG5jQ==}
+  '@prisma/debug@5.17.0':
+    resolution: {integrity: sha512-l7+AteR3P8FXiYyo496zkuoiJ5r9jLQEdUuxIxNCN1ud8rdbH3GTxm+f+dCyaSv9l9WY+29L9czaVRXz9mULfg==}
 
-  '@prisma/engines-version@5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2':
-    resolution: {integrity: sha512-2PTmxFR2yHW/eB3uqWtcgRcgAbG1rwG9ZriSvQw+nnb7c4uCr3RAcGMb6/zfE88SKlC1Nj2ziUvc96Z379mHgQ==}
+  '@prisma/engines-version@5.17.0-31.393aa359c9ad4a4bb28630fb5613f9c281cde053':
+    resolution: {integrity: sha512-tUuxZZysZDcrk5oaNOdrBnnkoTtmNQPkzINFDjz7eG6vcs9AVDmA/F6K5Plsb2aQc/l5M2EnFqn3htng9FA4hg==}
 
-  '@prisma/engines@5.22.0':
-    resolution: {integrity: sha512-UNjfslWhAt06kVL3CjkuYpHAWSO6L4kDCVPegV6itt7nD1kSJavd3vhgAEhjglLJJKEdJ7oIqDJ+yHk6qO8gPA==}
+  '@prisma/engines@5.17.0':
+    resolution: {integrity: sha512-+r+Nf+JP210Jur+/X8SIPLtz+uW9YA4QO5IXA+KcSOBe/shT47bCcRMTYCbOESw3FFYFTwe7vU6KTWHKPiwvtg==}
 
-  '@prisma/fetch-engine@5.22.0':
-    resolution: {integrity: sha512-bkrD/Mc2fSvkQBV5EpoFcZ87AvOgDxbG99488a5cexp5Ccny+UM6MAe/UFkUC0wLYD9+9befNOqGiIJhhq+HbA==}
+  '@prisma/fetch-engine@5.17.0':
+    resolution: {integrity: sha512-ESxiOaHuC488ilLPnrv/tM2KrPhQB5TRris/IeIV4ZvUuKeaicCl4Xj/JCQeG9IlxqOgf1cCg5h5vAzlewN91Q==}
 
-  '@prisma/get-platform@5.22.0':
-    resolution: {integrity: sha512-pHhpQdr1UPFpt+zFfnPazhulaZYCUqeIcPpJViYoq9R+D/yw4fjE+CtnsnKzPYm0ddUbeXUzjGVGIRVgPDCk4Q==}
+  '@prisma/get-platform@5.17.0':
+    resolution: {integrity: sha512-UlDgbRozCP1rfJ5Tlkf3Cnftb6srGrEQ4Nm3og+1Se2gWmCZ0hmPIi+tQikGDUVLlvOWx3Gyi9LzgRP+HTXV9w==}
 
   '@protobufjs/aspromise@1.1.2':
     resolution: {integrity: sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ==}
@@ -4870,8 +4906,8 @@ packages:
     resolution: {integrity: sha512-D1tKtYvByrBkFLe2wHJl2bwMJIiT8rW+XA+TiataH79/FszLQMrpGEvzUVkzPau7OCO0Qnrhpe87PqtOAIB8Yw==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  prisma@5.22.0:
-    resolution: {integrity: sha512-vtpjW3XuYCSnMsNVBjLMNkTj6OZbudcPPTPYHqX0CJfpcdWciI1dM8uHETwmDxxiqEwCIE6WvXucWUetJgfu/A==}
+  prisma@5.17.0:
+    resolution: {integrity: sha512-m4UWkN5lBE6yevqeOxEvmepnL5cNPEjzMw2IqDB59AcEV6w7D8vGljDLd1gPFH+W6gUxw9x7/RmN5dCS/WTPxA==}
     engines: {node: '>=16.13'}
     hasBin: true
 
@@ -6795,30 +6831,30 @@ snapshots:
 
   '@pkgr/core@0.2.9': {}
 
-  '@prisma/client@5.22.0(prisma@5.22.0)':
+  '@prisma/client@5.17.0(prisma@5.17.0)':
     optionalDependencies:
-      prisma: 5.22.0
+      prisma: 5.17.0
 
-  '@prisma/debug@5.22.0': {}
+  '@prisma/debug@5.17.0': {}
 
-  '@prisma/engines-version@5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2': {}
+  '@prisma/engines-version@5.17.0-31.393aa359c9ad4a4bb28630fb5613f9c281cde053': {}
 
-  '@prisma/engines@5.22.0':
+  '@prisma/engines@5.17.0':
     dependencies:
-      '@prisma/debug': 5.22.0
-      '@prisma/engines-version': 5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2
-      '@prisma/fetch-engine': 5.22.0
-      '@prisma/get-platform': 5.22.0
+      '@prisma/debug': 5.17.0
+      '@prisma/engines-version': 5.17.0-31.393aa359c9ad4a4bb28630fb5613f9c281cde053
+      '@prisma/fetch-engine': 5.17.0
+      '@prisma/get-platform': 5.17.0
 
-  '@prisma/fetch-engine@5.22.0':
+  '@prisma/fetch-engine@5.17.0':
     dependencies:
-      '@prisma/debug': 5.22.0
-      '@prisma/engines-version': 5.22.0-44.605197351a3c8bdd595af2d2a9bc3025bca48ea2
-      '@prisma/get-platform': 5.22.0
+      '@prisma/debug': 5.17.0
+      '@prisma/engines-version': 5.17.0-31.393aa359c9ad4a4bb28630fb5613f9c281cde053
+      '@prisma/get-platform': 5.17.0
 
-  '@prisma/get-platform@5.22.0':
+  '@prisma/get-platform@5.17.0':
     dependencies:
-      '@prisma/debug': 5.22.0
+      '@prisma/debug': 5.17.0
 
   '@protobufjs/aspromise@1.1.2': {}
 
@@ -10715,11 +10751,9 @@ snapshots:
       ansi-styles: 5.2.0
       react-is: 18.3.1
 
-  prisma@5.22.0:
+  prisma@5.17.0:
     dependencies:
-      '@prisma/engines': 5.22.0
-    optionalDependencies:
-      fsevents: 2.3.3
+      '@prisma/engines': 5.17.0
 
   process-warning@5.0.0: {}
 

@@ -6,7 +6,9 @@ import { startWhatsAppSession } from './lib/whatsapp';
 import { sleep } from './utils/common';
 import { QUEUE_NAME } from './utils/constants';
 import logger from './utils/logger';
-import { redis } from './utils/redis';
+import { redis } from '@repo/redis';
+import dotenv from 'dotenv';
+dotenv.config();
 export const sessions = new Map();
 export const msgRetryCounterCache = new NodeCache();
 const queue = new Queue<WhatsappJob>(QUEUE_NAME, {

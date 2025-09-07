@@ -2,6 +2,7 @@
   "name": "botify",
   "version": "0.0.0",
   "private": true,
+  "packageManager": "pnpm@10.13.1",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -17,7 +18,7 @@
     "db:migrate:reset": "bun --cwd packages/db db:migrate:reset",
     "db:push": "turbo run db:push",
     "db:seed": "turbo run db:seed",
-    "studio": "turbo run studio"
+    "studio": "cd packages/db && pnpx prisma studio"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
@@ -25,7 +26,6 @@
     "ts-jest": "^29.4.1",
     "turbo": "latest"
   },
-  
   "dependencies": {
     "dotenv": "^17.2.2"
   }

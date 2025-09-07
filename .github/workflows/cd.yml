@@ -1,12 +1,9 @@
 # .github/workflows/cd.yml
-
 name: Continuous Deployment
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy-web:
     name: Deploy Web App
@@ -22,13 +19,11 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -45,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/iamshadow666/botify-web
+          images: ghcr.io/iamshadow666/botify
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -55,5 +50,3 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            APP_NAME=@botify/web

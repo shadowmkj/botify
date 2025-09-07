@@ -1,7 +1,7 @@
 import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, WASocket } from "baileys";
 import qrcode from 'qrcode-terminal';
 import { deleteSessionFromRedis, useRedisAuthState } from "../auth/redis-auth";
-import { redis } from "../utils/redis";
+import { redis } from "@repo/redis";
 import { msgRetryCounterCache, sessions } from "../worker";
 import logger from "../utils/logger";
 import { Boom } from "@hapi/boom";
