@@ -88,6 +88,8 @@ enum BlastType {
 enum MessageType {
   Text
   Image
+  Video
+  Document
 }
 
 enum BlastStatus {
@@ -152,6 +154,7 @@ model Campaign {
   campaignType MessageType
   description  String?
   message      String?
+  media        String?
   blasts       Blast[]
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   scheduledAt  DateTime?

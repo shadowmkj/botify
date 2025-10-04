@@ -40,7 +40,8 @@ export type DeviceCreateValues = z.infer<typeof deviceCreateSchema>;
 
 export const sendMessageSchema = z.object({
   number: phoneNumberSchema,
-  message: z.string().min(1, "Message is required")
+  message: z.string().min(1, "Message is required"),
+  media: z.any().optional()
 })
 export type SendMessageValues = z.infer<typeof sendMessageSchema>;
 
