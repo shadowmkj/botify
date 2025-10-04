@@ -1,21 +1,21 @@
 import { NextResponse } from 'next/server';
-import multer from 'multer';
+// import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import fs from 'fs/promises';
 import { Queue } from 'bullmq';
 import { redis } from '@repo/redis';
-import { MessageType } from '@repo/types';
+import { MessageType } from '@repo/db';
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: './public/uploads', // Temporary storage for uploaded files
-    filename: (req, file, cb) => {
-      const uniqueSuffix = uuidv4();
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    },
-  }),
-});
+// const upload = multer({
+//   storage: multer.diskStorage({
+//     destination: './public/uploads', // Temporary storage for uploaded files
+//     filename: (req, file, cb) => {
+//       const uniqueSuffix = uuidv4();
+//       cb(null, uniqueSuffix + path.extname(file.originalname));
+//     },
+//   }),
+// });
 
 const messageQueue = new Queue('whatsappQueue', { connection: redis });
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     let mediaUrl: string | undefined;
     let mediaMimeType: string | undefined;
 
-    if (messageType === MessageType.MEDIA) {
+    if (messageType === MessageType.Document || messageType === MessageType.Image) {
       if (!mediaFile) {
         return NextResponse.json({ error: 'Media file is required for media messages' }, { status: 400 });
       }
