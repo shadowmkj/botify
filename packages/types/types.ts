@@ -48,6 +48,7 @@ interface SendMessageJob {
   blastId?: string;
   receiver: string;
   message: string;
+  media?: string;
 }
 
 interface CampaignJob {

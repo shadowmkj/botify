@@ -1,5 +1,6 @@
 "use client"
 import { sendMessage } from "@/actions/message"
+import MediaUpload from "@/components/media-upload"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -10,11 +11,13 @@ import { sendMessageSchema, SendMessageValues } from "@/types"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
 import { Send } from "lucide-react"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { toast } from "sonner"
 
 const SendMessagePage = () => {
   const { device: currentDevice } = useDeviceStore();
+  const [file, setFile] = useState<File | null>(null);
   const form = useForm({
     resolver: zodResolver(sendMessageSchema),
     defaultValues: {
@@ -28,6 +31,7 @@ const SendMessagePage = () => {
       if (res.status) {
         toast.success(res.message);
         form.resetField("message")
+        setFile(null);
       }
     },
     onError: () => {
@@ -35,11 +39,40 @@ const SendMessagePage = () => {
     }
   })
   const onSubmit = async (data: SendMessageValues) => {
+    if (!file && !data.message) {
+      return toast.error("Message or media is required")
+    }
+
+    const readFileAsBase64 = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+      });
+    };
+
+    let media: string | undefined = undefined;
+    if (file) {
+      try {
+        media = await readFileAsBase64(file);
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast.error("Error reading file.");
+        return;
+      }
+    }
+
     mutate({
       message: data.message,
       receiver: data.number,
-      sender: currentDevice!
+      sender: currentDevice!,
+      media
     })
+  }
+
+  const handleFileSelect = (file: File | null) => {
+    setFile(file);
   }
   return (
     <div className="flex flex-col items-center justify-center min-h-screen  p-4 sm:p-6 md:p-8">
@@ -63,6 +96,15 @@ const SendMessagePage = () => {
                     <FormLabel>message</FormLabel>
                     <FormControl>
                       <Textarea placeholder="type your message..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField name="media" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Media</FormLabel>
+                    <FormControl>
+                      <MediaUpload onFileSelect={handleFileSelect} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

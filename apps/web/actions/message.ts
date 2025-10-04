@@ -11,7 +11,8 @@ import z from "zod";
 const sendMessageZSchema = z.object({
   message: z.string().min(1, "Message is required"),
   receiver: phoneNumberSchema,
-  sender: phoneNumberSchema
+  sender: phoneNumberSchema,
+  media: z.string().optional()
 })
 
 
@@ -19,9 +20,10 @@ interface Props {
   message: string;
   receiver: string;
   sender: string;
+  media?: string;
 }
 export const sendMessage = async (data: Props) => {
-  const validated = z.safeParse(sendMessageZSchema, data)
+  const validated = sendMessageZSchema.safeParse(data)
   if (validated.success === false) {
     throw new Error("Invalid data: " + JSON.stringify(validated.error));
   }
@@ -32,6 +34,7 @@ export const sendMessage = async (data: Props) => {
       sender: validated.data.sender,
       receiver: validated.data.receiver,
       message: validated.data.message,
+      media: validated.data.media
     })
   } catch (error) {
     throw new Error("Failed to send message: " + error);

@@ -16,13 +16,26 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     headers: await headers()
   })
 
+  let campaignType: "Text" | "Image" | "Video" | "Document" = "Text";
+  if (values.media) {
+    const type = values.media.split("/")[0].split(":")[1];
+    if (type === "image") {
+      campaignType = "Image";
+    } else if (type === "video") {
+      campaignType = "Video";
+    } else {
+      campaignType = "Document";
+    }
+  }
+
   const data = await prisma.campaign.create({
     data: {
       name: values.name,
       senderNumber: values.sender,
       userId: session?.user?.id!,
-      campaignType: "Text",
-      message: values.message
+      campaignType: campaignType,
+      message: values.message,
+      media: values.media
     }
   })
 
@@ -39,7 +52,7 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     await prisma.blast.create({
       data: {
         type: "Campaign",
-        messageType: "Text",
+        messageType: campaignType,
         campaignId: data.id,
         contactId: contact.id
       }

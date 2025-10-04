@@ -23,7 +23,7 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
       break;
     }
     case 'send-message': {
-      const { sender, receiver, message, blastId, noDelay = false } = job.data
+      const { sender, receiver, message, blastId, noDelay = false, media } = job.data
       const { success, data: validatedSender } = phoneNumberSchema.safeParse(sender);
       if (success === false) {
         logger.error(`Invalid sender number: ${sender}`);
@@ -33,16 +33,35 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
       if (sock) {
         try {
           console.log(`Sending message to ${receiver} from session ${validatedSender}`);
-          //TODO: Good place to add delay
           if (!noDelay) {
             const randomDelay = Math.floor(Math.random() * 1000) + 500; // Random delay between 500ms and 1500ms
             await sleep(randomDelay);
           }
-          // await sock.sendMessage(`${to}@s.whatsapp.net`, { text });
           const result = await sock.onWhatsApp(receiver);
-          const response = await sock.sendMessage(result ? result[0].jid : "", {
-            text: message,
-          });
+          let response;
+          if (media) {
+            const [meta, base64] = media.split(",");
+            const buffer = Buffer.from(base64, 'base64');
+            const type = meta.split("/")[0].split(":")[1];
+            const fileType = meta.split("/")[1].split(";")[0];
+
+            let messageObject: any = { caption: message };
+            if (type === 'image') {
+              messageObject.image = buffer;
+            } else if (type === 'video') {
+              messageObject.video = buffer;
+            } else {
+              messageObject.document = buffer;
+              messageObject.mimetype = meta.split(":")[1].split(";")[0];
+              messageObject.fileName = `${Date.now()}.${fileType}`
+            }
+            response = await sock.sendMessage(result ? result[0].jid : "", messageObject);
+          } else {
+            response = await sock.sendMessage(result ? result[0].jid : "", {
+              text: message,
+            });
+          }
+
           if (response) {
             await prisma.device.update({
               data: {
@@ -127,7 +146,8 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
               sender: sender,
               receiver: blast.contact.phone,
               blastId: blast.id,
-              message: campaign.message ?? "Default"
+              message: campaign.message ?? "",
+              media: campaign.media ?? undefined
             },
             opts: {
               attempts: 3,
