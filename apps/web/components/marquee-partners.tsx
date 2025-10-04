@@ -1,4 +1,5 @@
 
+import Image from 'next/image';
 import React from 'react';
 
 const MarqueePartners = () => {
@@ -20,14 +21,14 @@ const MarqueePartners = () => {
       <div className="flex animate-marquee whitespace-nowrap">
         {partners.map((partner, index) => (
           <div key={index} className="flex-shrink-0 w-32 h-32 mx-4">
-            <img src={partner.logo} alt={partner.name} className="w-full h-full object-contain" />
+            <Image fill src={partner.logo} alt={partner.name} className="w-full h-full object-contain" />
           </div>
         ))}
       </div>
       <div className="absolute top-0 flex animate-marquee2 whitespace-nowrap">
         {partners.map((partner, index) => (
           <div key={index} className="flex-shrink-0 w-32 h-32 mx-4">
-            <img src={partner.logo} alt={partner.name} className="w-full h-full object-contain" />
+            <Image fill src={partner.logo} alt={partner.name} className="w-full h-full object-contain" />
           </div>
         ))}
       </div>

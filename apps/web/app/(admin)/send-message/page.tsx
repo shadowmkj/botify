@@ -100,7 +100,7 @@ const SendMessagePage = () => {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField name="media" render={({ field }) => (
+                <FormField name="media" render={({ }) => (
                   <FormItem>
                     <FormLabel>Media</FormLabel>
                     <FormControl>
