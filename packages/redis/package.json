@@ -2,8 +2,8 @@
   "name": "@repo/redis",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e ../../.env tsup redis.ts --format cjs,esm --dts --watch",
-    "build": "DOTENV_CONFIG_PATH=../../.env tsup redis.ts --format cjs,esm --dts"
+    "dev": "tsup redis.ts --watch",
+    "build": "tsup redis.ts --format cjs,esm --dts"
   },
   "devDependencies": {
     "@types/bun": "latest",

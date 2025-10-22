@@ -1,23 +1,23 @@
-import Redis from 'ioredis';
-import dotenv from 'dotenv';
+import Redis from "ioredis";
+import dotenv from "dotenv";
 dotenv.config({
-  path: '../../.env'
+  path: "../../.env",
 });
 export const redis = new Redis({
   port: Number(process.env.REDIS_PORT) || 6379,
   host: process.env.REDIS_HOST || "redis",
-  // password: process.env.REDIS_PASSWORD,
+  password: process.env.REDIS_PASSWORD,
   db: 0, // Defaults to 0
-  maxRetriesPerRequest: null
-})
+  maxRetriesPerRequest: null,
+});
 
 export const subscriber = new Redis({
   port: Number(process.env.REDIS_PORT) || 6379,
   host: process.env.REDIS_HOST || "redis",
-  // password: process.env.REDIS_PASSWORD,
+  password: process.env.REDIS_PASSWORD,
   db: 0, // Defaults to 0
-  maxRetriesPerRequest: null
-})
+  maxRetriesPerRequest: null,
+});
 // export const redis = new Redis({
 //   port: Number(process.env.REDIS_PORT) || 6379, // Defaults to 6379
 //   host: process.env.REDIS_HOST,
@@ -44,6 +44,3 @@ export const subscriber = new Redis({
 //   db: 0, // Defaults to 0
 //   maxRetriesPerRequest: null
 // })
-
-
-

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Github, Sparkles } from "lucide-react";
@@ -8,25 +8,35 @@ import FadeInView from "./animate-ui/fade-in-view";
 
 export default function HeroSection() {
   return (
-    <section className="relative space-y-6 py-8 md:py-12 lg:py-40">
+    <section className="relative space-y-6 py-8 md:py-12 lg:py-40 flex justify-center">
       <div className="container flex flex-col items-center gap-4 text-center">
         <FadeInView className="container flex flex-col items-center gap-4 text-center">
           <Badge className=" px-4 py-1.5 text-sm font-medium">
             <Sparkles className="mr-2 size-8" />
-            Open Source Authentication Starter
+            Bulkwhatsapp sending system
           </Badge>
         </FadeInView>
-        <FadeInView delay={0.2} className="text-3xl font-bold sm:text-4xl md:text-5xl lg:text-6xl">
-          Next.js 15 Authentication <br />
-          <span className="text-transparent px-2 bg-gradient-to-r from-primary bg-clip-text">Starter Template</span>
+        <FadeInView
+          delay={0.2}
+          className="text-3xl text-muted-foreground font-bold sm:text-4xl md:text-5xl lg:text-6xl"
+        >
+          Bulk whatsapp Sender
+          <br />
         </FadeInView>
-        <FadeInView delay={0.4} className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-          A complete, open-source authentication starter with login, registration, and protected routes. Available on GitHub.
+        <FadeInView
+          delay={0.4}
+          className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8"
+        >
+          Our system is designed for speed, scalability, and reliability,
+          allowing businesses to send thousands of WhatsApp messages seamlessly
         </FadeInView>
-        <FadeInView delay={0.6} className="flex flex-wrap items-center justify-center gap-4">
+        <FadeInView
+          delay={0.6}
+          className="flex flex-wrap items-center justify-center gap-4"
+        >
           <Button asChild size="lg">
             <Link
-              href="https://github.com/devAaus/better-auth"
+              href="https://codenik.in"
               target="_blank"
               className="flex items-center gap-2"
             >
