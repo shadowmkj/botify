@@ -19,6 +19,20 @@ export const formSchema = z.object({
 })
 
 export const signInFormSchema = formSchema.pick({
-   email: true,
-   password: true
+    email: true,
+    password: true
+})
+
+export const resetPasswordSchema = z.object({
+    password: z
+        .string()
+        .min(8, { message: "Password must be at least 8 characters long" })
+        .max(50, { message: "Password cannot exceed 50 characters" }),
+    confirmPassword: z
+        .string()
+        .min(8, { message: "Confirm password must be at least 8 characters long" })
+        .max(50, { message: "Confirm password cannot exceed 50 characters" })
+}).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"]
 })
