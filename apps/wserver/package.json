@@ -4,10 +4,10 @@
   "main": "worker.js",
   "scripts": {
     "start": "DOTENV_CONFIG_PATH=../../.env node -r dotenv/config dist/worker.js",
-    "dev": "DOTENV_CONFIG_PATH=../../.env ts-node-dev --respawn --transpile-only src/worker.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "worker": "ts-node-dev --respawn --transpile-only src/worker.ts",
     "lint": "eslint ./src",
-    "build": "dotenv -e ../../.env tsup src/worker.ts --format cjs,esm --dts",
+    "build": "tsup src/worker.ts --format cjs,esm --dts",
     "q": "ts-node src/test.ts",
     "send": "ts-node src/send-message.ts",
     "test": "jest --detectOpenHandles --forceExit"
