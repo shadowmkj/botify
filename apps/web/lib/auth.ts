@@ -7,6 +7,7 @@ export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql"
     }),
+    trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL as string, "https://botify.codenik.in"],
     emailAndPassword: {
         enabled: true,
         sendResetPassword: async ({user, url}) => {
