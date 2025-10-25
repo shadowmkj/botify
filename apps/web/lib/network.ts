@@ -5,9 +5,9 @@ export const sendSuccessResponse = <T>(data: T) => {
   }
 }
 
-export const sendErrorResponse = <T>(data: T) => {
+export const sendErrorResponse = <T>(error: T) => {
   return {
     status: false,
-    data: data
+    error: error
   }
 }

@@ -36,7 +36,7 @@ const WhatsappScannerPage = ({
     const socketUrl =
       process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
-    socket = io(socketUrl);
+        socket = io(socketUrl);
 
     socket.on("qr-update", (message: string) => {
       const data = JSON.parse(message) as SocketEvent;
@@ -58,10 +58,20 @@ const WhatsappScannerPage = ({
 
     socket.emit("subscribe-to-qr", { sessionId });
 
-    return () => {
-      if (socket) socket.disconnect();
+        return () => {
+            if (socket) socket.disconnect();
+        };
+    }, [sessionId]);
+
+    const handleLogout = async () => {
+        await logoutDevice(sessionId)
+    }
+    const userInfo = {
+        name: "Ahgem",
+        phone: "+917034983527",
+        status: "Coding my way through the world!",
+        avatarUrl: "https://placehold.co/100x100/EFEFEF/333?text=MJ",
     };
-  }, [sessionId]);
 
   const handleLogout = async () => {
     await logoutDevice(sessionId);

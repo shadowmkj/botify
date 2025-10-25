@@ -1,171 +1,188 @@
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
-  // output        = "./client"
+    provider      = "prisma-client-js"
+    binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+    // output        = "./client"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  name          String?
-  emailVerified Boolean
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
-  Device        Device[]
-  Campaign      Campaign[]
-  Contact       Contact[]
-  ContactGroup  ContactGroup[]
+    id            String         @id @default(uuid())
+    email         String         @unique
+    name          String?
+    emailVerified Boolean
+    image         String?
+    createdAt     DateTime
+    updatedAt     DateTime
+    sessions      Session[]
+    accounts      Account[]
+    Device        Device[]
+    apiKey        String?        @unique
+    Campaign      Campaign[]
+    plan          Plan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
+    planId        String?
+    Contact       Contact[]
+    ContactGroup  ContactGroup[]
 
-  @@map("user")
+    @@map("user")
+}
+
+model Plan {
+    id           String   @id
+    name         String
+    description  String?
+    price        Int
+    messageLimit Int?
+    devicesLimit  Int @default(1)
+    users        User[]
+    createdAt    DateTime
+    updatedAt    DateTime
+
+    @@map("plan")
 }
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime
-  updatedAt DateTime
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id        String   @id
+    expiresAt DateTime
+    token     String
+    createdAt DateTime
+    updatedAt DateTime
+    ipAddress String?
+    userAgent String?
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
-  @@map("session")
+    @@unique([token])
+    @@map("session")
 }
 
 model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime
-  updatedAt             DateTime
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime
+    updatedAt             DateTime
 
-  @@map("account")
+    @@map("account")
 }
 
 model Verification {
-  id         String    @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime?
-  updatedAt  DateTime?
+    id         String    @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime?
+    updatedAt  DateTime?
 
-  @@map("verification")
+    @@map("verification")
 }
 
 //NOTE: Custom Models
 
 enum DeviceStatus {
-  Connected
-  Disconnected
+    Connected
+    Disconnected
 }
 
 enum BlastType {
-  AutoReply
-  Campaign
-  Remote
+    AutoReply
+    Campaign
+    Remote
 }
 
 enum MessageType {
-  Text
-  Image
-  Video
-  Document
+    Text
+    Image
+    Video
+    Document
 }
 
 enum BlastStatus {
-  Pending
-  Sent
-  Failed
+    Pending
+    Sent
+    Failed
 }
 
 model Device {
-  id           String       @id @default(uuid())
-  messagesSent Int          @default(0)
-  body         String       @unique
-  status       DeviceStatus @default(Disconnected)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  userId       String
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  autoreplies  Autoreply[]
+    id           String       @id @default(uuid())
+    messagesSent Int          @default(0)
+    body         String       @unique
+    status       DeviceStatus @default(Disconnected)
+    createdAt    DateTime     @default(now())
+    updatedAt    DateTime     @updatedAt
+    userId       String
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    autoreplies  Autoreply[]
 }
 
 model Blast {
-  id          String      @id @default(uuid())
-  type        BlastType
-  messageType MessageType
-  status      BlastStatus @default(Pending)
-  campaign    Campaign?   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  campaignId  String?
-  contactId   String
-  contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+    id          String      @id @default(uuid())
+    type        BlastType
+    messageType MessageType
+    status      BlastStatus @default(Pending)
+    campaign    Campaign?   @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+    campaignId  String?
+    contactId   String
+    contact     Contact     @relation(fields: [contactId], references: [id], onDelete: Cascade)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
 }
 
 model Contact {
-  id             String       @id @default(uuid())
-  name           String
-  phone          String
-  userId         String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contactGroup   ContactGroup @relation(fields: [contactGroupId], references: [id], onDelete: Cascade)
-  contactGroupId String
-  blast          Blast[]
+    id             String       @id @default(uuid())
+    name           String
+    phone          String
+    userId         String
+    createdAt      DateTime     @default(now())
+    updatedAt      DateTime     @updatedAt
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    contactGroup   ContactGroup @relation(fields: [contactGroupId], references: [id], onDelete: Cascade)
+    contactGroupId String
+    blast          Blast[]
 }
 
 model ContactGroup {
-  id        String    @id @default(uuid())
-  name      String
-  userId    String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contacts  Contact[]
+    id        String    @id @default(uuid())
+    name      String
+    userId    String
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+    user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    contacts  Contact[]
 }
 
 model Campaign {
-  id           String      @id @default(uuid())
-  name         String
-  senderNumber String
-  userId       String
-  campaignType MessageType
-  description  String?
-  message      String?
-  media        String?
-  blasts       Blast[]
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scheduledAt  DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+    id           String      @id @default(uuid())
+    name         String
+    senderNumber String
+    userId       String
+    campaignType MessageType
+    description  String?
+    message      String?
+    media        String?
+    blasts       Blast[]
+    user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    scheduledAt  DateTime?
+    createdAt    DateTime    @default(now())
+    updatedAt    DateTime    @updatedAt
 }
 
 model Autoreply {
-  id       String @id @default(uuid())
-  keyword  String
-  reply    String
-  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  deviceId String
+    id       String @id @default(uuid())
+    keyword  String
+    reply    String
+    device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+    deviceId String
 }

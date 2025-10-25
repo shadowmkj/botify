@@ -34,8 +34,8 @@ const SendMessagePage = () => {
         setFile(null);
       }
     },
-    onError: () => {
-      toast.error("Failed to send message");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to send message");
     }
   })
   const onSubmit = async (data: SendMessageValues) => {
