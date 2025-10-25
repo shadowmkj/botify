@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useDeviceStore } from "@/store/device-store"
 import { useQuery } from "@tanstack/react-query"
-import { BookUser, FilePen, LayoutDashboard, Reply, Send, TabletSmartphoneIcon, Users } from "lucide-react"
+import { BookUser, FilePen, LayoutDashboard, Reply, Send, TabletSmartphoneIcon, Users, CreditCard } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useEffect } from "react"
@@ -124,6 +124,16 @@ export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sid
                   <Reply />
                 </div>
                 <span className={`text-sm font-medium`}>Autoreplies</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton isActive={pathname.startsWith('/plans')} size="lg">
+              <Link href="/plans" className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                  <CreditCard />
+                </div>
+                <span className={`text-sm font-medium`}>Plans</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
