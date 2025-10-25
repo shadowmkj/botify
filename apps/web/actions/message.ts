@@ -1,46 +1,52 @@
 "use server"
 
-import { QUEUE_NAME } from "@/lib/constants/global"
-import { redis } from "@repo/redis"
-import { phoneNumberSchema, sendMessageSchema } from "@/types";
-import { WhatsappJob } from "@repo/types";
-import { Queue } from "bullmq"
-import { NextResponse } from "next/server";
-import z from "zod";
+import { MessageService } from "@/lib/messageService"
+import { phoneNumberSchema } from "@/types"
+import { prisma } from "@repo/db"
+import z from "zod"
 
 const sendMessageZSchema = z.object({
   message: z.string().min(1, "Message is required"),
   receiver: phoneNumberSchema,
   sender: phoneNumberSchema,
-  media: z.string().optional()
+  media: z.string().optional(),
 })
 
-
 interface Props {
-  message: string;
-  receiver: string;
-  sender: string;
-  media?: string;
+  message: string
+  receiver: string
+  sender: string
+  media?: string
 }
+
 export const sendMessage = async (data: Props) => {
   const validated = sendMessageZSchema.safeParse(data)
   if (validated.success === false) {
-    throw new Error("Invalid data: " + JSON.stringify(validated.error));
+    throw new Error("Invalid data: " + JSON.stringify(validated.error))
   }
   try {
-    const queue = new Queue<WhatsappJob>(QUEUE_NAME, { connection: redis });
-    await queue.add('send-message', {
-      type: 'send-message',
-      sender: validated.data.sender,
-      receiver: validated.data.receiver,
-      message: validated.data.message,
-      media: validated.data.media
+    const device = await prisma.device.findUnique({
+      where: { body: validated.data.sender },
+      select: { userId: true },
     })
-  } catch (error) {
-    throw new Error("Failed to send message: " + error);
+    if (!device) throw new Error("Device not found")
+
+    const svc = new MessageService(validated.data.sender, device.userId)
+    await svc.queueSendMessage(
+      validated.data.receiver,
+      validated.data.message,
+      validated.data.media
+    )
+  } catch (error: any) {
+    if (error?.code === "QUOTA_EXCEEDED") {
+      throw new Error(
+        "Your plan limit is reached. Upgrade your plan or wait for reset."
+      )
+    }
+    throw new Error("Failed to send message: " + error)
   }
   return {
     status: true,
-    message: "Message queued successfully"
+    message: "Message queued successfully",
   }
 }

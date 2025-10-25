@@ -1,15 +1,12 @@
 'use server'
 
 import { auth } from "@/lib/auth"
-import { QUEUE_NAME } from "@/lib/constants/global"
 import { prisma } from "@repo/db"
-import { redis } from "@repo/redis"
-import { WhatsappJob } from "@repo/types"
-import { Queue } from "bullmq"
 import { headers } from "next/headers"
 import z from "zod"
 import { revalidatePath } from "next/cache"
 import { createCampaignSchema } from "@/app/(admin)/campaigns/new/campaignSchema"
+import { MessageService } from "@/lib/messageService"
 
 export const createCampaign = async (values: z.infer<typeof createCampaignSchema>) => {
   const session = await auth.api.getSession({
@@ -59,18 +56,15 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     })
   }) || [])
 
-  const q = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis
-  })
-  await q.add("campaign", {
-    type: "campaign",
-    campaignId: data.id,
-    sender: values.sender
-  }, {
-    removeOnComplete: true,
-    attempts: 3,
-    removeOnFail: true
-  })
+  try {
+    const svc = new MessageService(values.sender, session?.user?.id!)
+    await svc.queueCampaign(data.id)
+  } catch (error: any) {
+    if (error?.code === "QUOTA_EXCEEDED") {
+      throw new Error("Your plan limit is reached. Upgrade your plan or wait for reset.")
+    }
+    throw error
+  }
 }
 
 export const deleteCampaign = async (id: string) => {

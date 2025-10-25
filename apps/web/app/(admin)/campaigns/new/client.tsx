@@ -68,8 +68,8 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
       toast.success("Campaign Created!")
       form.reset();
       setFile(null);
-    } catch {
-      toast.error("Error creating campaign!")
+    } catch (err){
+      toast.error(err instanceof Error ? err.message : "Error creating campaign");
     }
   }
 
