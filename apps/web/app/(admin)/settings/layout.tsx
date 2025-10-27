@@ -3,23 +3,24 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 export default async function SettingsAdminLayout({
-  children,
+    children,
 }: {
-  children: React.ReactNode;
+    children: React.ReactNode;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
 
-  if (!session) {
-    return redirect("/sign-in");
-  }
+    if (!session) {
+        return redirect("/sign-in");
+    }
 
-  const role = (session.user as any)?.role as string | undefined;
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    const role = (session.user as any)?.role as string | undefined;
 
-  if (role !== "Admin") {
-    return redirect("/dashboard");
-  }
+    if (role !== "Admin") {
+        return redirect("/dashboard");
+    }
 
-  return children;
+    return children;
 }

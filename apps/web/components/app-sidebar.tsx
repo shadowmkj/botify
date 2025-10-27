@@ -21,7 +21,6 @@ import Logo from "./logo"
 import { NavUser } from "./nav-user"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select"
 import { Skeleton } from "./ui/skeleton"
-import { useUser } from "@/context/UserContext"
 import { authClient } from "@/lib/auth-client"
 
 export default function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

@@ -23,6 +23,7 @@ export async function POST(request: Request) {
         await svc.queueSendMessage(receiver, message, media)
 
         return NextResponse.json({ status: true, message: "Message queued successfully" }, { status: 200 })
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     } catch (error: any) {
         console.log(error.code)
         if (error?.code === "QUOTA_EXCEEDED") {
