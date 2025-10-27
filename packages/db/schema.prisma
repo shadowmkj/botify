@@ -24,6 +24,10 @@ model User {
     Campaign      Campaign[]
     plan          Plan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
     planId        String?
+    role          String?        @default("user")
+    banned        Boolean?
+    banReason     String?
+    banExpiresAt  DateTime?
     Contact       Contact[]
     ContactGroup  ContactGroup[]
 
@@ -36,7 +40,7 @@ model Plan {
     description  String?
     price        Int
     messageLimit Int?
-    devicesLimit  Int @default(1)
+    devicesLimit Int      @default(1)
     users        User[]
     createdAt    DateTime
     updatedAt    DateTime
@@ -45,15 +49,16 @@ model Plan {
 }
 
 model Session {
-    id        String   @id
-    expiresAt DateTime
-    token     String
-    createdAt DateTime
-    updatedAt DateTime
-    ipAddress String?
-    userAgent String?
-    userId    String
-    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    id             String   @id
+    expiresAt      DateTime
+    token          String
+    createdAt      DateTime
+    updatedAt      DateTime
+    ipAddress      String?
+    userAgent      String?
+    userId         String
+    impersonatedBy String?
+    user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([token])
     @@map("session")
