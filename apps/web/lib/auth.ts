@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@repo/db"
 import { sendPasswordResetEmail } from "@/actions/send-mail";
-import { admin } from "better-auth/plugins"
+import { admin, apiKey } from "better-auth/plugins"
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -27,6 +27,7 @@ export const auth = betterAuth({
         max: 10,
     },
     plugins: [
-        admin()
+        admin(),
+        apiKey()
     ]
 })
