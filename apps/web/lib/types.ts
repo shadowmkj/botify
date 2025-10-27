@@ -5,5 +5,6 @@ export interface User {
    emailVerified: boolean;
    createdAt: Date;
    updatedAt: Date;
+   role?: string | undefined | null;
    image?: string | null | undefined;
 }

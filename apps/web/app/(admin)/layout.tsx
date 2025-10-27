@@ -15,6 +15,7 @@ export default async function DashboardLayout({
     headers: await headers()
   })
 
+    console.log(JSON.stringify(session, null, 2));
   if (!session) {
     return redirect("/sign-in")
   }
