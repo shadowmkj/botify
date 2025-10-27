@@ -11,7 +11,7 @@ datasource db {
 
 model User {
     id            String         @id @default(uuid())
-    email         String         @unique
+    email         String
     name          String?
     emailVerified Boolean
     image         String?
@@ -20,7 +20,7 @@ model User {
     sessions      Session[]
     accounts      Account[]
     Device        Device[]
-    apiKey        String?        @unique
+    apikeys       Apikey[]
     Campaign      Campaign[]
     plan          Plan?          @relation(fields: [planId], references: [id], onDelete: SetNull)
     planId        String?
@@ -32,6 +32,7 @@ model User {
     ContactGroup  ContactGroup[]
 
     @@map("user")
+    @@unique([email])
 }
 
 model Plan {
@@ -92,6 +93,33 @@ model Verification {
     updatedAt  DateTime?
 
     @@map("verification")
+}
+
+model Apikey {
+    id                  String    @id
+    name                String?
+    start               String?
+    prefix              String?
+    key                 String
+    userId              String
+    user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    refillInterval      Int?
+    refillAmount        Int?
+    lastRefillAt        DateTime?
+    enabled             Boolean?  @default(true)
+    rateLimitEnabled    Boolean?  @default(true)
+    rateLimitTimeWindow Int?
+    rateLimitMax        Int?
+    requestCount        Int?
+    remaining           Int?
+    lastRequest         DateTime?
+    expiresAt           DateTime?
+    createdAt           DateTime
+    updatedAt           DateTime
+    permissions         String?
+    metadata            String?
+
+    @@map("apikey")
 }
 
 //NOTE: Custom Models
