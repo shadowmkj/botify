@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { MessageType, prisma } from '@repo/db'
 import { MessageService } from '@/lib/messageService'
+import { verifyApiAccess } from '@/lib/api-auth'
+import { PERMISSIONS_MESSAGES_SEND, PERMISSIONS_MESSAGES_SEND_MEDIA } from '@/lib/constants/auth'
 
 export async function POST(request: Request) {
     try {
@@ -16,10 +18,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing required fields: to, messageType, sender' }, { status: 400 })
         }
 
+        // Verify API key based on message type permissions
+        const isMedia = messageType === MessageType.Document || messageType === MessageType.Image || messageType === MessageType.Video
+        const api = await verifyApiAccess(request, isMedia ? PERMISSIONS_MESSAGES_SEND_MEDIA : PERMISSIONS_MESSAGES_SEND)
+
         const payloadMessage = content
         let inlineMedia: string | undefined
 
-        if (messageType === MessageType.Document || messageType === MessageType.Image || messageType === MessageType.Video) {
+        if (isMedia) {
             if (!mediaFile) {
                 return NextResponse.json({ error: 'Media file is required for media messages' }, { status: 400 })
             }
@@ -33,12 +39,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Device not found' }, { status: 404 })
         }
 
+        // Enforce ownership: API key user must own the device
+        if (device.userId !== api.userId) {
+            return NextResponse.json({ error: 'API key not authorized for this device' }, { status: 403 })
+        }
+
         const svc = new MessageService(sender, device.userId)
         await svc.queueSendMessage(to, payloadMessage, inlineMedia)
 
         return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
     } catch (error: any) {
+        if (error instanceof Response) {
+            return error
+        }
         if (error?.code === 'QUOTA_EXCEEDED') {
             return NextResponse.json({ error: 'Your plan limit is reached. Upgrade your plan or wait for reset.' }, { status: 429 })
         }

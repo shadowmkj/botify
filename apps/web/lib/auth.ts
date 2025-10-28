@@ -28,6 +28,12 @@ export const auth = betterAuth({
     },
     plugins: [
         admin(),
-        apiKey()
+        apiKey({
+            permissions: {
+                defaultPermissions: {
+                    messages: ["send", "send_media"],
+                },
+            },
+        })
     ]
 })
