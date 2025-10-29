@@ -23,7 +23,7 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
       break;
     }
     case 'send-message': {
-      const { sender, receiver, message, blastId, noDelay = false, media } = job.data
+      const { sender, receiver, message, blastId, noDelay = false, media, mediaType, fileName, mimeType } = job.data
       const { success, data: validatedSender } = phoneNumberSchema.safeParse(sender);
       if (success === false) {
         logger.error(`Invalid sender number: ${sender}`);
@@ -40,22 +40,67 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
           const result = await sock.onWhatsApp(receiver);
           let response;
           if (media) {
-            const [meta, base64] = media.split(",");
-            const buffer = Buffer.from(base64, 'base64');
-            const type = meta.split("/")[0].split(":")[1];
-            const fileType = meta.split("/")[1].split(";")[0];
+            const isDataUrl = media.startsWith('data:');
+            if (isDataUrl) {
+              const [meta, base64] = media.split(",");
+              const buffer = Buffer.from(base64, 'base64');
+              const type = meta.split("/")[0].split(":")[1];
+              const fileType = meta.split("/")[1].split(";")[0];
 
-            let messageObject: any = { caption: message };
-            if (type === 'image') {
-              messageObject.image = buffer;
-            } else if (type === 'video') {
-              messageObject.video = buffer;
+              let messageObject: any = { caption: message };
+              if (type === 'image') {
+                messageObject.image = buffer;
+              } else if (type === 'video') {
+                messageObject.video = buffer;
+              } else {
+                messageObject.document = buffer;
+                messageObject.mimetype = meta.split(":")[1].split(";")[0];
+                messageObject.fileName = `${Date.now()}.${fileType}`
+              }
+              response = await sock.sendMessage(result ? result[0].jid : "", messageObject);
             } else {
-              messageObject.document = buffer;
-              messageObject.mimetype = meta.split(":")[1].split(";")[0];
-              messageObject.fileName = `${Date.now()}.${fileType}`
+              // Treat media as URL (preferred flow)
+              const inferFromUrl = (url: string): { kind: 'image' | 'video' | 'document'; mime?: string; name?: string } => {
+                try {
+                  const u = new URL(url);
+                  const pathname = u.pathname.toLowerCase();
+                  const name = decodeURIComponent(pathname.split('/').pop() || 'file');
+                  const ext = name.split('.').pop();
+                  const map: Record<string, { kind: 'image' | 'video' | 'document'; mime: string }> = {
+                    jpg: { kind: 'image', mime: 'image/jpeg' },
+                    jpeg: { kind: 'image', mime: 'image/jpeg' },
+                    png: { kind: 'image', mime: 'image/png' },
+                    webp: { kind: 'image', mime: 'image/webp' },
+                    gif: { kind: 'image', mime: 'image/gif' },
+                    mp4: { kind: 'video', mime: 'video/mp4' },
+                    mov: { kind: 'video', mime: 'video/quicktime' },
+                    pdf: { kind: 'document', mime: 'application/pdf' },
+                    docx: { kind: 'document', mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+                    doc: { kind: 'document', mime: 'application/msword' },
+                    xlsx: { kind: 'document', mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+                    csv: { kind: 'document', mime: 'text/csv' },
+                  };
+                  if (ext && map[ext]) return { ...map[ext], name };
+                  return { kind: 'document', name };
+                } catch {
+                  return { kind: 'document' };
+                }
+              };
+
+              const inferred = mediaType ? { kind: mediaType as 'image' | 'video' | 'document', mime: mimeType, name: fileName } : inferFromUrl(media);
+
+              let messageObject: any = { caption: message };
+              if (inferred.kind === 'image') {
+                messageObject.image = { url: media };
+              } else if (inferred.kind === 'video') {
+                messageObject.video = { url: media };
+              } else {
+                messageObject.document = { url: media };
+                if (inferred.mime) messageObject.mimetype = inferred.mime;
+                messageObject.fileName = fileName || inferred.name || `${Date.now()}`;
+              }
+              response = await sock.sendMessage(result ? result[0].jid : "", messageObject);
             }
-            response = await sock.sendMessage(result ? result[0].jid : "", messageObject);
           } else {
             response = await sock.sendMessage(result ? result[0].jid : "", {
               text: message,
@@ -74,7 +119,7 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
               }
             })
             if (blastId) {
-              const blast = await prisma.blast.update({
+              await prisma.blast.update({
                 where: {
                   id: blastId
                 },
@@ -88,7 +133,7 @@ new Worker<WhatsappJob>(QUEUE_NAME, async (job: Job<WhatsappJob>) => {
         } catch (error) {
           console.error('Failed to send message:', error);
           if (blastId) {
-            const blast = await prisma.blast.update({
+            await prisma.blast.update({
               where: {
                 id: blastId
               },

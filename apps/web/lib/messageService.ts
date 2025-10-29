@@ -61,7 +61,12 @@ export class MessageService {
         return { ok: true as const, left, limit }
     }
 
-    async queueSendMessage(receiver: string, message: string, media?: string) {
+    async queueSendMessage(
+        receiver: string,
+        message: string,
+        media?: string,
+        opts?: { mediaType?: 'image' | 'video' | 'document'; fileName?: string; mimeType?: string }
+    ) {
         await this.assertCanQueue(1)
         return this.queue.add(
             "send-message",
@@ -71,12 +76,15 @@ export class MessageService {
                 receiver,
                 message,
                 media,
+                mediaType: opts?.mediaType,
+                fileName: opts?.fileName,
+                mimeType: opts?.mimeType,
             },
             { attempts: 3, removeOnComplete: true, removeOnFail: true }
         )
     }
 
-    async queueBulkSendMessages(items: Array<{ receiver: string; message: string; media?: string }>) {
+    async queueBulkSendMessages(items: Array<{ receiver: string; message: string; media?: string; mediaType?: 'image' | 'video' | 'document'; fileName?: string; mimeType?: string }>) {
         await this.assertCanQueue(items.length)
         return this.queue.addBulk(
             items.map(it => ({
@@ -87,6 +95,9 @@ export class MessageService {
                     receiver: it.receiver,
                     message: it.message,
                     media: it.media,
+                    mediaType: it.mediaType,
+                    fileName: it.fileName,
+                    mimeType: it.mimeType,
                 } as WhatsappJob,
                 opts: { attempts: 3, removeOnComplete: true, removeOnFail: true },
             }))

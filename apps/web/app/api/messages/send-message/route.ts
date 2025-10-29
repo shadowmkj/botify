@@ -13,10 +13,19 @@ export async function POST(request: Request) {
         const receiver: string | undefined = body?.number
         const message: string | undefined = body?.text
         const media: string | undefined = body?.media
+        const mediaType: 'image' | 'video' | 'document' | undefined = body?.mediaType
+        const fileName: string | undefined = body?.fileName
+        const mimeType: string | undefined = body?.mimeType
 
-        if (!sender || !receiver || !message) {
-            return NextResponse.json({ error: "Missing sender, number, or text" }, { status: 400 })
+        if (!sender || !receiver) {
+            return NextResponse.json({ error: "Missing sender or number" }, { status: 400 })
         }
+        const hasMessage = typeof message === 'string' && message.trim().length > 0
+        const hasMedia = typeof media === 'string' && media.trim().length > 0
+        if (!hasMessage && !hasMedia) {
+            return NextResponse.json({ error: "Message or media is required" }, { status: 400 })
+        }
+
 
         const device = await prisma.device.findUnique({ where: { body: sender }, select: { userId: true } })
         if (!device) {
@@ -29,7 +38,7 @@ export async function POST(request: Request) {
         }
 
         const svc = new MessageService(sender, device.userId)
-        await svc.queueSendMessage(receiver, message, media)
+        await svc.queueSendMessage(receiver, message || '', media, hasMedia ? { mediaType, fileName, mimeType } : undefined)
 
         return NextResponse.json({ status: true, message: "Message queued successfully" }, { status: 200 })
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any */

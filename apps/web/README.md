@@ -1,64 +1,31 @@
-# Botify 🚀
+# Botify Web
 
-Botify is a modern **Whatsapp Automation** system built with Next.js 15, featuring authentication  and a sleek UI using Tailwind CSS and ShadCN.
+This app provides the dashboard and APIs for Botify.
 
-## ✨ Features
+## Media Upload + Send
 
-- 🔐 **Authentication with BetterAuth**
-- 🔑 **Google OAuth Login**
-- 🎨 **Modern UI with Tailwind CSS & ShadCN**
-- 🗄️ **Database integration with Prisma & PostgreSQL**
-- ⚡ **Optimized with Next.js 15 App Router**
+- Upload via `POST /api/media/upload` with multipart field `file`. Response includes `{ url, fileName, mimeType, size }`.
+- Files are saved under `public/media`, so the returned `url` is a static path like `/media/<id>__name.ext`.
+- Legacy `GET /api/media/[id]` remains for compatibility and now redirects to the static URL.
 
-## 🛠️ Tech Stack
+Smoke test examples:
 
-- **Framework:** Next.js 15
-- **Auth Provider:** BetterAuth (Credentials & Google Login)
-- **Database:** PostgreSQL with Prisma ORM
-- **Styling:** Tailwind CSS, ShadCN
+- Upload:
+  - `curl -F file=@/path/to/sample.jpg http://localhost:3000/api/media/upload`
+- Static Serve:
+  - The upload response contains `url` like `http://localhost:3000/media/<id>__sample.jpg`.
+- Legacy redirect:
+  - `curl -i http://localhost:3000/api/media/<id>` (302 redirect to `/media/<id>__...`)
 
-## 🚀 Getting Started
+## Message APIs
 
-### 1️⃣ Install Dependencies
+- JSON: `POST /api/messages/send-message` with `{ sender, number, text?, media?, mediaType?, mimeType?, fileName? }`.
+- Multipart: `POST /api/messages/send` with fields `sender`, `to`, `messageType` (Text|Image|Video|Document), `content?`, `media?` (File). Saves file and queues with its internal URL.
 
-```bash
-bun install
-```
+Both endpoints accept text-only, media-only, or both.
 
+## Env Keys
 
-### 2️⃣ Set Up Environment Variables
-Create a .env file and add the necessary credentials:
-
-```bash
-# Secret key for BetterAuth (Use a strong, random secret)
-BETTER_AUTH_SECRET=<your_better_auth_secret>
-
-# The base URL of your application (Update this for production)
-BETTER_AUTH_URL=http://localhost:3000  # Change this to your production domain in deployment
-
-# PostgreSQL Database Connection URL (Use environment variables in production)
-DATABASE_URL="postgresql://<username>:<password>@<host>/<database_name>?sslmode=require"
-
-# Google OAuth Credentials (Required for social login)
-GOOGLE_CLIENT_ID=<your_google_client_id>
-GOOGLE_CLIENT_SECRET=<your_google_client_secret>
-```
-
-
-### 3️⃣ Run Database Migrations
-
-```bash
-bunx prisma migrate dev
-```
-
-
-### 4️⃣ Start the Development Server
-
-```bash
-bun dev
-```
-
-The app will be available at http://localhost:3000.
-
-# Developed by Milan Pramod
+- `MEDIA_MAX_BYTES` (bytes, default 10MB)
+- `MEDIA_STORAGE_DIR` (path where uploads are stored)
 

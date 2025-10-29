@@ -24,6 +24,11 @@ services:
       - redis
     env_file:
       - production.env
+    environment:
+      - MEDIA_STORAGE_DIR=/app/media
+    volumes:
+      - media_data:/app/apps/web/public/media
 volumes:
   postgres_data:
   redis_data:
+  media_data:
