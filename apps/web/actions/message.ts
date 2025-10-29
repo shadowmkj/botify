@@ -6,10 +6,19 @@ import { prisma } from "@repo/db"
 import z from "zod"
 
 const sendMessageZSchema = z.object({
-  message: z.string().min(1, "Message is required"),
+  message: z.string().max(500).default(''),
   receiver: phoneNumberSchema,
   sender: phoneNumberSchema,
   media: z.string().optional(),
+  mediaType: z.enum(['image','video','document']).optional(),
+  fileName: z.string().optional(),
+  mimeType: z.string().optional(),
+}).superRefine((data, ctx) => {
+  const hasMessage = typeof data.message === 'string' && data.message.trim().length > 0;
+  const hasMedia = typeof data.media === 'string' && data.media.trim().length > 0;
+  if (!hasMessage && !hasMedia) {
+    ctx.addIssue({ code: 'custom', message: 'Message or media is required' });
+  }
 })
 
 interface Props {
@@ -17,6 +26,9 @@ interface Props {
   receiver: string
   sender: string
   media?: string
+  mediaType?: 'image' | 'video' | 'document'
+  fileName?: string
+  mimeType?: string
 }
 
 export const sendMessage = async (data: Props) => {
@@ -35,7 +47,8 @@ export const sendMessage = async (data: Props) => {
     await svc.queueSendMessage(
       validated.data.receiver,
       validated.data.message,
-      validated.data.media
+      validated.data.media,
+      validated.data.media ? { mediaType: validated.data.mediaType, fileName: validated.data.fileName, mimeType: validated.data.mimeType } : undefined
     )
   } catch (error: any) {
     if (error?.code === "QUOTA_EXCEEDED") {

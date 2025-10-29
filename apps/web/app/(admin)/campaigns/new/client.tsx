@@ -23,7 +23,7 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
     queryFn: getConnectedDevices,
   });
   const [file, setFile] = useState<File | null>(null);
-  const form = useForm<z.infer<typeof createCampaignSchema>>({
+  const form = useForm({
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
       name: '',
@@ -43,22 +43,18 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
       return toast.error("Message or media is required")
     }
 
-    const readFileAsBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-      });
-    };
-
     let media: string | undefined = undefined;
     if (file) {
       try {
-        media = await readFileAsBase64(file);
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+        if (!res.ok) throw new Error("Upload failed");
+        const json = await res.json();
+        media = json.url as string;
       } catch (error) {
-        console.error("Error reading file:", error);
-        toast.error("Error reading file.");
+        console.error("Error uploading file:", error);
+        toast.error("Error uploading file.");
         return;
       }
     }

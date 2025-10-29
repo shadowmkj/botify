@@ -15,17 +15,34 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
 
   let campaignType: "Text" | "Image" | "Video" | "Document" = "Text";
   if (values.media) {
-    const type = values.media.split("/")[0].split(":")[1];
-    if (type === "image") {
-      campaignType = "Image";
-    } else if (type === "video") {
-      campaignType = "Video";
+    const media = values.media;
+    if (media.startsWith('data:')) {
+      const type = media.split("/")[0].split(":" )[1];
+      if (type === "image") {
+        campaignType = "Image";
+      } else if (type === "video") {
+        campaignType = "Video";
+      } else {
+        campaignType = "Document";
+      }
     } else {
-      campaignType = "Document";
+      try {
+        const u = new URL(media);
+        const pathname = u.pathname.toLowerCase();
+        const name = decodeURIComponent(pathname.split('/').pop() || 'file');
+        const ext = name.split('.').pop();
+        const imageExts = new Set(['jpg','jpeg','png','webp','gif']);
+        const videoExts = new Set(['mp4','mov','webm']);
+        if (ext && imageExts.has(ext)) campaignType = 'Image';
+        else if (ext && videoExts.has(ext)) campaignType = 'Video';
+        else campaignType = 'Document';
+      } catch {
+        campaignType = 'Document';
+      }
     }
   }
-
-  const data = await prisma.campaign.create({
+ 
+   const data = await prisma.campaign.create({
     data: {
       name: values.name,
       senderNumber: values.sender,
