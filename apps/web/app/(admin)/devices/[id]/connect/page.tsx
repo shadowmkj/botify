@@ -3,11 +3,11 @@ import { logoutDevice } from "@/actions/device";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
 } from "@/components/ui/card";
 import { SocketEvent } from "@repo/types";
 import Image from "next/image";
@@ -16,47 +16,47 @@ import QRCode from "react-qr-code";
 import { io, Socket } from "socket.io-client";
 let socket: Socket;
 const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex justify-between items-center py-2">
-    <span className="text-sm font-medium text-gray-500">{label}</span>
-    <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
-  </div>
+    <div className="flex justify-between items-center py-2">
+        <span className="text-sm font-medium text-gray-500">{label}</span>
+        <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
+    </div>
 );
 
 const WhatsappScannerPage = ({
-  params,
+    params,
 }: {
-  params: Promise<{ id: string }>;
+    params: Promise<{ id: string }>;
 }) => {
-  const { id: sessionId } = use(params);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-  const [profilePic, setProfilePic] = useState("");
+    const { id: sessionId } = use(params);
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [status, setStatus] = useState("");
+    const [profilePic, setProfilePic] = useState("");
 
-  useEffect(() => {
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+    useEffect(() => {
+        const socketUrl =
+            process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
         socket = io(socketUrl);
 
-    socket.on("qr-update", (message: string) => {
-      const data = JSON.parse(message) as SocketEvent;
-      console.log(data);
-      if (data.event == "QR") {
-        setQrCode(data.qr!);
-        setProfilePic("");
-        setStatus("Disconnected");
-      } else if (data.event == "OPEN") {
-        setQrCode(null);
-        setProfilePic(data.profile || "");
-        setStatus("Connected");
-      } else if (data.event == "LOGOUT") {
-        setQrCode(null);
-        setProfilePic("");
-        setStatus("Disconnected");
-      }
-    });
+        socket.on("qr-update", (message: string) => {
+            const data = JSON.parse(message) as SocketEvent;
+            console.log(data);
+            if (data.event == "QR") {
+                setQrCode(data.qr!);
+                setProfilePic("");
+                setStatus("Disconnected");
+            } else if (data.event == "OPEN") {
+                setQrCode(null);
+                setProfilePic(data.profile || "");
+                setStatus("Connected");
+            } else if (data.event == "LOGOUT") {
+                setQrCode(null);
+                setProfilePic("");
+                setStatus("Disconnected");
+            }
+        });
 
-    socket.emit("subscribe-to-qr", { sessionId });
+        socket.emit("subscribe-to-qr", { sessionId });
 
         return () => {
             if (socket) socket.disconnect();
@@ -64,8 +64,8 @@ const WhatsappScannerPage = ({
     }, [sessionId]);
 
     const handleLogout = async () => {
-        await logoutDevice(sessionId)
-    }
+        await logoutDevice(sessionId);
+    };
     const userInfo = {
         name: "Ahgem",
         phone: "+917034983527",
@@ -73,74 +73,64 @@ const WhatsappScannerPage = ({
         avatarUrl: "https://placehold.co/100x100/EFEFEF/333?text=MJ",
     };
 
-  const handleLogout = async () => {
-    await logoutDevice(sessionId);
-  };
-  const userInfo = {
-    name: "Ahgem",
-    phone: "+917034983527",
-    status: "Coding my way through the world!",
-    avatarUrl: "https://placehold.co/100x100/EFEFEF/333?text=MJ",
-  };
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen  p-4 sm:p-6 md:p-8">
+            <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-1">
+                {/* QR Code Scanner Section */}
+                <Card className="w-full max-w-lg mx-auto rounded-xl shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="text-2xl font-bold text-center">
+                            Scan QR Code
+                        </CardTitle>
+                        <CardDescription className="text-center">
+                            To link your WhatsApp account, scan this code with your phone.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center p-6">
+                        {qrCode && (
+                            <div className="bg-white p-4 rounded-lg flex items-center justify-center">
+                                <QRCode level="M" value={qrCode} />
+                            </div>
+                        )}
+                        {profilePic && (
+                            <Image
+                                width={100}
+                                height={100}
+                                src={profilePic}
+                                alt="Profile"
+                                className="rounded-full"
+                            />
+                        )}
+                        {!qrCode && status != "Connected" && <span>Loading..</span>}
+                        {status === "Connected" && (
+                            <div className="text-green-500 mt-4">Connected Successfully!</div>
+                        )}
+                        {status === "Disconnected" && (
+                            <div className="text-red-500 mt-4">
+                                Disconnected. Please try again.
+                            </div>
+                        )}
+                        <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+                            Need help?{" "}
+                            <a href="#" className="underline">
+                                Learn how to connect
+                            </a>
+                            .
+                        </p>
+                        <div className="mt-auto w-half pt-4">
+                            <Button
+                                onClick={handleLogout}
+                                className="w-full "
+                                variant={"destructive"}
+                            >
+                                Log out
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
 
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen  p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-1">
-        {/* QR Code Scanner Section */}
-        <Card className="w-full max-w-lg mx-auto rounded-xl shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center">
-              Scan QR Code
-            </CardTitle>
-            <CardDescription className="text-center">
-              To link your WhatsApp account, scan this code with your phone.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center p-6">
-            {qrCode && (
-              <div className="bg-white p-4 rounded-lg flex items-center justify-center">
-                <QRCode level="M" value={qrCode} />
-              </div>
-            )}
-            {profilePic && (
-              <Image
-                width={100}
-                height={100}
-                src={profilePic}
-                alt="Profile"
-                className="rounded-full"
-              />
-            )}
-            {!qrCode && status != "Connected" && <span>Loading..</span>}
-            {status === "Connected" && (
-              <div className="text-green-500 mt-4">Connected Successfully!</div>
-            )}
-            {status === "Disconnected" && (
-              <div className="text-red-500 mt-4">
-                Disconnected. Please try again.
-              </div>
-            )}
-            <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
-              Need help?{" "}
-              <a href="#" className="underline">
-                Learn how to connect
-              </a>
-              .
-            </p>
-            <div className="mt-auto w-half pt-4">
-              <Button
-                onClick={handleLogout}
-                className="w-full "
-                variant={"destructive"}
-              >
-                Log out
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* User Information Section */}
-        {/* <Card className="w-full max-w-md mx-auto rounded-xl shadow-lg">
+                {/* User Information Section */}
+                {/* <Card className="w-full max-w-md mx-auto rounded-xl shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">
               Account Information
@@ -178,9 +168,9 @@ const WhatsappScannerPage = ({
             </Button>
           </CardContent>
         </Card> */}
-      </div>
-    </div>
-  );
+            </div>
+        </div>
+    );
 };
 
 export default WhatsappScannerPage;

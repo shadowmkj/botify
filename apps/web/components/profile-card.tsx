@@ -29,10 +29,6 @@ export default function ProfileCard() {
           <h3 className="font-semibold text-xl">{user?.name}</h3>
           <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
-        <div className="space-y-1">
-          <h3 className="font-semibold text-xl">{user?.id}</h3>
-          <p className="text-sm text-muted-foreground">{user?.id}</p>
-        </div>
         <div className="flex items-center gap-2 mt-4">
           <Badge variant="outline" className="flex items-center gap-1">
             <Check className="h-3 w-3" />
