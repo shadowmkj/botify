@@ -2,23 +2,31 @@ const ApidocPage = async () => {
   const apiEndpoints = [
     {
       method: "POST",
-      endpoint: "/api/devices/create",
-      description: "Create a new WhatsApp device instance",
+      endpoint: "http://botify.codenik.in/api/messages/send",
+      description: "Header Name:x-api-key",
       body: {
-        name: "My WhatsApp Device",
-        phone: "+1234567890",
+        sender: +917012749946,
+        to: +918943025837,
+        messageType: "text",
+        content: "Hello  this is only test",
       },
     },
     {
-      method: "GET",
-      endpoint: "/api/devices/:id",
-      description: "Get device details by ID",
-      body: null,
+      method: "POST",
+      endpoint: "http://botify.codenik.in/api/messages/send",
+      description: "Header Name:x-api-key",
+      body: {
+        sender: +917012749946,
+        to: +918943025837,
+        messageType: "media",
+        title: "title text",
+        content: "Hello  this is only test",
+      },
     },
     {
       method: "POST",
-      endpoint: "/api/message/send",
-      description: "Send a WhatsApp message",
+      endpoint: "http://botify.codenik.in/api/messages/send-message",
+      description: "Header Name:x-api-key",
       body: {
         deviceId: "device_123",
         to: "+1234567890",

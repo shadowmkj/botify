@@ -93,7 +93,13 @@ const WhatsappScannerPage = ({
               </div>
             )}
             {profilePic && (
-              <Image width={450} height={450} src={profilePic} alt="Profile" />
+              <Image
+                width={100}
+                height={100}
+                src={profilePic}
+                alt="Profile"
+                className="rounded-full"
+              />
             )}
             {!qrCode && status != "Connected" && <span>Loading..</span>}
             {status === "Connected" && (
@@ -111,7 +117,7 @@ const WhatsappScannerPage = ({
               </a>
               .
             </p>
-            <div className="mt-auto w-full pt-4">
+            <div className="mt-auto w-half pt-4">
               <Button
                 onClick={handleLogout}
                 className="w-full "

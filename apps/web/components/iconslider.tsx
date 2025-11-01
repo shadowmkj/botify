@@ -46,7 +46,7 @@ const Ballpage = () => {
   console.log("LogoLoop is:", LogoLoop);
 
   return (
-    <section className="pb-20 pt-20 md:pb-32 md:pt-32 container mx-auto">
+    <section className="pb-20 pt-2 md:pb-32 md:pt-32 container mx-auto">
       <FadeInView className="text-center space-y-4 pb-16 mx-auto max-w-4xl">
         <h2 className="mx-auto mt-4 text-3xl text-muted-foreground font-bold sm:text-5xl tracking-tight">
           Technology Partners
