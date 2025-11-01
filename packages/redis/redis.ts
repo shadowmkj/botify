@@ -1,9 +1,11 @@
 import Redis from "ioredis";
 import dotenv from "dotenv";
+
 dotenv.config({
   path: "../../.env",
 });
-export const redis = new Redis({
+
+const getOptions = () => ({
   port: Number(process.env.REDIS_PORT) || 6379,
   host: process.env.REDIS_HOST || "redis",
   password: process.env.REDIS_PASSWORD,
@@ -11,13 +13,25 @@ export const redis = new Redis({
   maxRetriesPerRequest: null,
 });
 
-export const subscriber = new Redis({
-  port: Number(process.env.REDIS_PORT) || 6379,
-  host: process.env.REDIS_HOST || "redis",
-  password: process.env.REDIS_PASSWORD,
-  db: 0, // Defaults to 0
-  maxRetriesPerRequest: null,
-});
+const isProd = process.env.NODE_ENV === "production";
+
+type RedisClient = Redis;
+
+const globalForRedis = globalThis as unknown as {
+  __redis?: RedisClient;
+  __redisSubscriber?: RedisClient;
+};
+
+const redisInstance = globalForRedis.__redis ?? new Redis(getOptions());
+if (!isProd) globalForRedis.__redis = redisInstance;
+
+const subscriberInstance =
+  globalForRedis.__redisSubscriber ?? redisInstance.duplicate();
+if (!isProd) globalForRedis.__redisSubscriber = subscriberInstance;
+
+export const redis = redisInstance;
+export const subscriber = subscriberInstance;
+
 // export const redis = new Redis({
 //   port: Number(process.env.REDIS_PORT) || 6379, // Defaults to 6379
 //   host: process.env.REDIS_HOST,
