@@ -40,8 +40,14 @@ export type DeviceCreateValues = z.infer<typeof deviceCreateSchema>;
 
 export const sendMessageSchema = z.object({
   number: phoneNumberSchema,
-  message: z.string().min(1, "Message is required"),
+  message: z.string().max(500).default(''),
   media: z.any().optional()
+}).superRefine((data, ctx) => {
+  const hasMessage = typeof data.message === 'string' && data.message.trim().length > 0;
+  const hasMedia = !!data.media;
+  if (!hasMessage && !hasMedia) {
+    ctx.addIssue({ code: 'custom', message: 'Message or media is required' });
+  }
 })
 export type SendMessageValues = z.infer<typeof sendMessageSchema>;
 

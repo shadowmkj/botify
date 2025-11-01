@@ -34,8 +34,8 @@ const SendMessagePage = () => {
         setFile(null);
       }
     },
-    onError: () => {
-      toast.error("Failed to send message");
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to send message");
     }
   })
   const onSubmit = async (data: SendMessageValues) => {
@@ -43,22 +43,28 @@ const SendMessagePage = () => {
       return toast.error("Message or media is required")
     }
 
-    const readFileAsBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = (error) => reject(error);
-      });
-    };
-
     let media: string | undefined = undefined;
+    let fileName: string | undefined = undefined;
+    let mimeType: string | undefined = undefined;
+    let mediaType: 'image' | 'video' | 'document' | undefined = undefined;
+
     if (file) {
       try {
-        media = await readFileAsBase64(file);
+        const form = new FormData();
+        form.append("file", file);
+        const res = await fetch("/api/media/upload", { method: "POST", body: form });
+        if (!res.ok) throw new Error("Upload failed");
+        const json = await res.json();
+        media = json.url as string;
+        fileName = json.fileName as string | undefined;
+        mimeType = json.mimeType as string | undefined;
+        const t = (mimeType || '').toLowerCase();
+        if (t.startsWith('image/')) mediaType = 'image';
+        else if (t.startsWith('video/')) mediaType = 'video';
+        else mediaType = 'document';
       } catch (error) {
-        console.error("Error reading file:", error);
-        toast.error("Error reading file.");
+        console.error("Error uploading file:", error);
+        toast.error("Error uploading file.");
         return;
       }
     }
@@ -67,7 +73,10 @@ const SendMessagePage = () => {
       message: data.message,
       receiver: data.number,
       sender: currentDevice!,
-      media
+      media,
+      mediaType,
+      fileName,
+      mimeType,
     })
   }
 

@@ -15,28 +15,43 @@ import { use, useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { io, Socket } from "socket.io-client";
 let socket: Socket;
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex justify-between items-center py-2">
-    <span className="text-sm font-medium text-gray-500">{label}</span>
-    <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
-  </div>
+const InfoItem = ({ label, value }: { label: string, value: string }) => (
+    <div className="flex justify-between items-center py-2">
+        <span className="text-sm font-medium text-gray-500">{label}</span>
+        <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
+    </div>
 );
 
-const WhatsappScannerPage = ({
-  params,
-}: {
-  params: Promise<{ id: string }>;
+const WhatsappScannerPage = ({ params }: {
+    params: Promise<{ id: string }>
 }) => {
-  const { id: sessionId } = use(params);
-  const [qrCode, setQrCode] = useState<string | null>(null);
-  const [status, setStatus] = useState("");
-  const [profilePic, setProfilePic] = useState("");
+    const { id: sessionId } = use(params)
+    const [qrCode, setQrCode] = useState<string | null>(null);
+    const [status, setStatus] = useState('');
+    const [profilePic, setProfilePic] = useState('');
 
-  useEffect(() => {
-    const socketUrl =
-      process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+    useEffect(() => {
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
 
-    socket = io(socketUrl);
+        socket = io(socketUrl);
+
+        socket.on('qr-update', (message: string) => {
+            const data = JSON.parse(message) as SocketEvent
+            console.log(data);
+            if (data.event == "QR") {
+                setQrCode(data.qr!);
+                setProfilePic('');
+                setStatus('Disconnected');
+            } else if (data.event == "OPEN") {
+                setQrCode(null);
+                setProfilePic(data.profile || '');
+                setStatus('Connected');
+            } else if (data.event == "LOGOUT") {
+                setQrCode(null);
+                setProfilePic('');
+                setStatus('Disconnected');
+            }
+        });
 
     socket.on("qr-update", (message: string) => {
       const data = JSON.parse(message) as SocketEvent;
@@ -58,10 +73,15 @@ const WhatsappScannerPage = ({
 
     socket.emit("subscribe-to-qr", { sessionId });
 
-    return () => {
-      if (socket) socket.disconnect();
+    const handleLogout = async () => {
+        await logoutDevice(sessionId)
+    }
+    const userInfo = {
+        name: "Ahgem",
+        phone: "+917034983527",
+        status: "Coding my way through the world!",
+        avatarUrl: "https://placehold.co/100x100/EFEFEF/333?text=MJ",
     };
-  }, [sessionId]);
 
   const handleLogout = async () => {
     await logoutDevice(sessionId);

@@ -1,15 +1,12 @@
 'use server'
 
 import { auth } from "@/lib/auth"
-import { QUEUE_NAME } from "@/lib/constants/global"
 import { prisma } from "@repo/db"
-import { redis } from "@repo/redis"
-import { WhatsappJob } from "@repo/types"
-import { Queue } from "bullmq"
 import { headers } from "next/headers"
 import z from "zod"
 import { revalidatePath } from "next/cache"
 import { createCampaignSchema } from "@/app/(admin)/campaigns/new/campaignSchema"
+import { MessageService } from "@/lib/messageService"
 
 export const createCampaign = async (values: z.infer<typeof createCampaignSchema>) => {
   const session = await auth.api.getSession({
@@ -18,17 +15,34 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
 
   let campaignType: "Text" | "Image" | "Video" | "Document" = "Text";
   if (values.media) {
-    const type = values.media.split("/")[0].split(":")[1];
-    if (type === "image") {
-      campaignType = "Image";
-    } else if (type === "video") {
-      campaignType = "Video";
+    const media = values.media;
+    if (media.startsWith('data:')) {
+      const type = media.split("/")[0].split(":" )[1];
+      if (type === "image") {
+        campaignType = "Image";
+      } else if (type === "video") {
+        campaignType = "Video";
+      } else {
+        campaignType = "Document";
+      }
     } else {
-      campaignType = "Document";
+      try {
+        const u = new URL(media);
+        const pathname = u.pathname.toLowerCase();
+        const name = decodeURIComponent(pathname.split('/').pop() || 'file');
+        const ext = name.split('.').pop();
+        const imageExts = new Set(['jpg','jpeg','png','webp','gif']);
+        const videoExts = new Set(['mp4','mov','webm']);
+        if (ext && imageExts.has(ext)) campaignType = 'Image';
+        else if (ext && videoExts.has(ext)) campaignType = 'Video';
+        else campaignType = 'Document';
+      } catch {
+        campaignType = 'Document';
+      }
     }
   }
-
-  const data = await prisma.campaign.create({
+ 
+   const data = await prisma.campaign.create({
     data: {
       name: values.name,
       senderNumber: values.sender,
@@ -59,18 +73,15 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     })
   }) || [])
 
-  const q = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis
-  })
-  await q.add("campaign", {
-    type: "campaign",
-    campaignId: data.id,
-    sender: values.sender
-  }, {
-    removeOnComplete: true,
-    attempts: 3,
-    removeOnFail: true
-  })
+  try {
+    const svc = new MessageService(values.sender, session?.user?.id!)
+    await svc.queueCampaign(data.id)
+  } catch (error: any) {
+    if (error?.code === "QUOTA_EXCEEDED") {
+      throw new Error("Your plan limit is reached. Upgrade your plan or wait for reset.")
+    }
+    throw error
+  }
 }
 
 export const deleteCampaign = async (id: string) => {
