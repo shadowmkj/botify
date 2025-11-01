@@ -48,7 +48,12 @@ interface SendMessageJob {
   blastId?: string;
   receiver: string;
   message: string;
+  // media may be a URL (preferred) or a data: URL (temporary backward compatibility)
   media?: string;
+  // Optional media metadata to help the worker build the Baileys message
+  mediaType?: 'image' | 'video' | 'document';
+  fileName?: string;
+  mimeType?: string;
 }
 
 interface CampaignJob {

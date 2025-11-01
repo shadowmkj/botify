@@ -2,14 +2,16 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "@repo/db"
 import { sendPasswordResetEmail } from "@/actions/send-mail";
+import { admin, apiKey } from "better-auth/plugins"
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
         provider: "postgresql"
     }),
+    trustedOrigins: [process.env.BETTER_AUTH_URL as string],
     emailAndPassword: {
         enabled: true,
-        sendResetPassword: async ({user, url}) => {
+        sendResetPassword: async ({ user, url }) => {
             await sendPasswordResetEmail({ email: user.email, resetUrl: url });
         },
         autoSignIn: false
@@ -24,4 +26,14 @@ export const auth = betterAuth({
         window: 60, // time window in seconds
         max: 10,
     },
+    plugins: [
+        admin(),
+        apiKey({
+            permissions: {
+                defaultPermissions: {
+                    messages: ["send", "send_media"],
+                },
+            },
+        })
+    ]
 })

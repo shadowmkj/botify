@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -21,7 +22,7 @@ import { resetPasswordSchema } from "@/lib/auth-schema"
 
 type FormValues = z.infer<typeof resetPasswordSchema>
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
 
@@ -119,5 +120,13 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center px-4 py-10"><div className="w-full max-w-md text-center">Loading...</div></div>}>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }
