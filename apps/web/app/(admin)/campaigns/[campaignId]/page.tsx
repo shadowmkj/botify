@@ -12,7 +12,11 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: string }> }) => {
+const CampaignDetailsPage = async ({
+  params,
+}: {
+  params: Promise<{ campaignId: string }>;
+}) => {
   const campaign = await prisma.campaign.findUnique({
     where: {
       id: (await params).campaignId,
@@ -34,11 +38,16 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
     notFound();
   }
 
-  const groupName = campaign.blasts.length > 0 ? campaign.blasts[0].contact.contactGroup.name : "N/A";
+  const groupName =
+    campaign.blasts.length > 0
+      ? campaign.blasts[0].contact.contactGroup.name
+      : "N/A";
 
   return (
     <div className="space-y-8 p-4">
-      <h1 className="text-3xl font-bold text-primary mb-6">Campaign: {campaign.name}</h1>
+      <h1 className="text-3xl font-bold text-primary mb-6">
+        Campaign: {campaign.name}
+      </h1>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
@@ -73,7 +82,9 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
             <CardTitle>Created On</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg">{new Date(campaign.createdAt).toLocaleDateString()}</p>
+            <p className="text-lg">
+              {new Date(campaign.createdAt).toLocaleDateString()}
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -81,12 +92,18 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
             <CardTitle>Status</CardTitle>
           </CardHeader>
           <CardContent>
-            {campaign.blasts.filter((blast) => blast.status === "Sent").length} / {campaign.blasts.length}
+            {
+              campaign.blasts.filter((blast: any) => blast.status === "Sent")
+                .length
+            }{" "}
+            / {campaign.blasts.length}
           </CardContent>
         </Card>
       </div>
 
-      <h2 className="text-2xl font-bold mt-10 mb-4 text-primary">Campaign Blasts</h2>
+      <h2 className="text-2xl font-bold mt-10 mb-4 text-primary">
+        Campaign Blasts
+      </h2>
       <div className="rounded-md border bg-card text-card-foreground shadow-sm">
         <Table>
           <TableHeader className="bg-muted/50">
@@ -107,10 +124,12 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
                 </TableCell>
               </TableRow>
             )}
-            {campaign.blasts.map((blast, idx) => (
+            {campaign.blasts.map((blast: any, idx: any) => (
               <TableRow key={blast.id}>
                 <TableCell className="font-bold">{idx + 1}</TableCell>
-                <TableCell className="font-medium">{blast.contact.name}</TableCell>
+                <TableCell className="font-medium">
+                  {blast.contact.name}
+                </TableCell>
                 <TableCell>{blast.contact.phone}</TableCell>
                 <TableCell>
                   <Badge
@@ -118,8 +137,8 @@ const CampaignDetailsPage = async ({ params }: { params: Promise<{ campaignId: s
                       blast.status === "Sent"
                         ? "default"
                         : blast.status === "Failed"
-                          ? "destructive"
-                          : "secondary"
+                        ? "destructive"
+                        : "secondary"
                     }
                   >
                     {blast.status}

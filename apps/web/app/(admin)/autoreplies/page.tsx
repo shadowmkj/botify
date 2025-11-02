@@ -15,32 +15,29 @@ const AutorepliesPage = async () => {
       <Suspense fallback={<TableSkeleton />}>
         <AutorepliesServerComponent />
       </Suspense>
-    </div >
-  )
-}
+    </div>
+  );
+};
 
 const AutorepliesServerComponent = async () => {
   const session = await auth.api.getSession({
-    headers: await headers()
-  })
+    headers: await headers(),
+  });
   const devices = await prisma.device.findMany({
     where: {
-      userId: session?.user.id
+      userId: session?.user.id,
     },
     include: {
       autoreplies: {
         include: {
-          device: true
-        }
-      }
-    }
-  })
-  console.log(JSON.stringify(devices))
-  const autoreplies = devices.flatMap(device => device.autoreplies);
-  return (
-    <AutoreplyTable initialAutoreplies={autoreplies} />
-  )
-}
-
+          device: true,
+        },
+      },
+    },
+  });
+  console.log(JSON.stringify(devices));
+  const autoreplies = devices.flatMap((device: any) => device.autoreplies);
+  return <AutoreplyTable initialAutoreplies={autoreplies} />;
+};
 
 export default AutorepliesPage;
