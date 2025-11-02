@@ -6,34 +6,40 @@ import { WhatsappJob } from "@repo/types";
 import { prisma } from "@repo/db";
 
 const initAutoreply = async (upsert: IUpsert, number: string) => {
-  const autoreplies = (await prisma.device.findMany({
-    where: { body: number },
-    include: { autoreplies: true }
-  })).flatMap(device => device.autoreplies);
+  const autoreplies = (
+    await prisma.device.findMany({
+      where: { body: number },
+      include: { autoreplies: true },
+    })
+  ).flatMap((device: any) => device.autoreplies);
   const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis
+    connection: redis,
   });
 
-
-
-  autoreplies.map((autoreply) => {
+  autoreplies.map((autoreply: any) => {
     upsert.messages.map(async (message) => {
       if (
         (
           message.message?.extendedTextMessage?.text ??
           message.message?.conversation
-        )?.trim().toLowerCase() == autoreply.keyword.trim().toLowerCase() &&
+        )
+          ?.trim()
+          .toLowerCase() == autoreply.keyword.trim().toLowerCase() &&
         !message.key.fromMe
       ) {
-        console.log(message.message?.extendedTextMessage?.text ?? message.message?.conversation, autoreply.keyword);
+        console.log(
+          message.message?.extendedTextMessage?.text ??
+            message.message?.conversation,
+          autoreply.keyword
+        );
         // const msg: IMessage = JSON.parse(autoreply.reply);
-        await queue.add('send-message', {
-          type: 'send-message',
+        await queue.add("send-message", {
+          type: "send-message",
           sender: number,
           receiver: message.key.remoteJid ?? "",
           message: autoreply.reply,
-          noDelay: true
-        })
+          noDelay: true,
+        });
       }
     });
   });

@@ -1,12 +1,33 @@
-'use client'
+"use client";
 import { createCampaign } from "@/actions/campaign";
 import { getConnectedDevices } from "@/actions/device";
 import MediaUpload from "@/components/media-upload";
+import EmojiTextarea from "@/components/emoji-textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactGroup } from "@repo/db";
@@ -17,30 +38,34 @@ import { toast } from "sonner";
 import z from "zod";
 import { createCampaignSchema } from "./campaignSchema";
 
-export default function CampaignForm({ contactGroups }: { contactGroups: ContactGroup[] }) {
+export default function CampaignForm({
+  contactGroups,
+}: {
+  contactGroups: ContactGroup[];
+}) {
   const { data: devices } = useQuery({
-    queryKey: ['devices'],
+    queryKey: ["devices"],
     queryFn: getConnectedDevices,
   });
   const [file, setFile] = useState<File | null>(null);
   const form = useForm({
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
-      name: '',
-      message: '',
-      contactGroupId: '',
-      sender: '',
-      media: undefined
+      name: "",
+      message: "",
+      contactGroupId: "",
+      sender: "",
+      media: undefined,
     },
   });
 
   const handleFileSelect = (file: File | null) => {
     setFile(file);
-  }
+  };
 
   async function onSubmit(values: z.infer<typeof createCampaignSchema>) {
     if (!file && !values.message) {
-      return toast.error("Message or media is required")
+      return toast.error("Message or media is required");
     }
 
     let media: string | undefined = undefined;
@@ -48,7 +73,10 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
       try {
         const formData = new FormData();
         formData.append("file", file);
-        const res = await fetch("/api/media/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/media/upload", {
+          method: "POST",
+          body: formData,
+        });
         if (!res.ok) throw new Error("Upload failed");
         const json = await res.json();
         media = json.url as string;
@@ -60,12 +88,14 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
     }
 
     try {
-      await createCampaign({ ...values, media })
-      toast.success("Campaign Created!")
+      await createCampaign({ ...values, media });
+      toast.success("Campaign Created!");
       form.reset();
       setFile(null);
-    } catch (err){
-      toast.error(err instanceof Error ? err.message : "Error creating campaign");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Error creating campaign"
+      );
     }
   }
 
@@ -73,7 +103,9 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
     <Card>
       <CardHeader>
         <CardTitle>Campaign Details</CardTitle>
-        <CardDescription>Fill out the form to create a new campaign.</CardDescription>
+        <CardDescription>
+          Fill out the form to create a new campaign.
+        </CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -84,7 +116,10 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
                 <FormItem>
                   <FormLabel>Campaign Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Summer Sale Announcement" {...field} />
+                    <Input
+                      placeholder="e.g., Summer Sale Announcement"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -96,7 +131,10 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Contact Group</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a group" />
@@ -121,9 +159,8 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
                 <FormItem>
                   <FormLabel>Message</FormLabel>
                   <FormControl>
-                    <Textarea
+                    <EmojiTextarea
                       placeholder="Write your campaign message here..."
-                      className="resize-y"
                       {...field}
                     />
                   </FormControl>
@@ -131,33 +168,41 @@ export default function CampaignForm({ contactGroups }: { contactGroups: Contact
                 </FormItem>
               )}
             />
-            <FormField name="sender" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Sender</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+            <FormField
+              name="sender"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sender</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select sender" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {devices?.map((d: any) => (
+                        <SelectItem key={d.id} value={d.body}>
+                          {d.body}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="media"
+              render={({}) => (
+                <FormItem>
+                  <FormLabel>Media</FormLabel>
                   <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select sender" />
-                    </SelectTrigger>
+                    <MediaUpload onFileSelect={handleFileSelect} />
                   </FormControl>
-                  <SelectContent>
-                    {devices?.map((d) => (
-                      <SelectItem key={d.id} value={d.body}>{d.body}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <FormField name="media" render={({ }) => (
-              <FormItem>
-                <FormLabel>Media</FormLabel>
-                <FormControl>
-                  <MediaUpload onFileSelect={handleFileSelect} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
           <CardFooter className="flex justify-end">
             <Button type="submit">Create Campaign</Button>

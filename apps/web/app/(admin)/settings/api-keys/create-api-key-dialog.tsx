@@ -81,7 +81,10 @@ export function CreateApiKeyDialog({
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="name"
@@ -115,7 +118,9 @@ export function CreateApiKeyDialog({
                 <FormItem>
                   <FormLabel>Expires</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(value ? parseInt(value) : undefined)}
+                    onValueChange={(value) =>
+                      field.onChange(value ? parseInt(value) : undefined)
+                    }
                     value={field.value?.toString()}
                   >
                     <FormControl>
@@ -138,7 +143,7 @@ export function CreateApiKeyDialog({
                 </FormItem>
               )}
             />
-            <FormField
+            {/* <FormField
               control={form.control}
               name="remaining"
               render={({ field }) => (
@@ -155,7 +160,7 @@ export function CreateApiKeyDialog({
                   <FormMessage />
                 </FormItem>
               )}
-            />
+            /> */}
             <div className="flex justify-end space-x-2">
               <Button
                 type="button"
