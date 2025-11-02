@@ -28,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactGroup } from "@repo/db";
 import { useQuery } from "@tanstack/react-query";
@@ -180,7 +179,7 @@ export default function CampaignForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {devices?.map((d: any) => (
+                      {devices?.map((d) => (
                         <SelectItem key={d.id} value={d.body}>
                           {d.body}
                         </SelectItem>

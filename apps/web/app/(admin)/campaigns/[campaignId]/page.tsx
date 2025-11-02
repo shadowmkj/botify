@@ -93,7 +93,7 @@ const CampaignDetailsPage = async ({
           </CardHeader>
           <CardContent>
             {
-              campaign.blasts.filter((blast: any) => blast.status === "Sent")
+              campaign.blasts.filter((blast) => blast.status === "Sent")
                 .length
             }{" "}
             / {campaign.blasts.length}
@@ -124,7 +124,7 @@ const CampaignDetailsPage = async ({
                 </TableCell>
               </TableRow>
             )}
-            {campaign.blasts.map((blast: any, idx: any) => (
+            {campaign.blasts.map((blast, idx) => (
               <TableRow key={blast.id}>
                 <TableCell className="font-bold">{idx + 1}</TableCell>
                 <TableCell className="font-medium">

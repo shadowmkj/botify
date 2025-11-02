@@ -25,6 +25,7 @@ const transporter = nodemailer.createTransport({
     user: env.SMTP_USER,
     pass: env.SMTP_PASS,
   },
+/* eslint-disable-next-line @typescript-eslint/no-explicit-any */
 } as any);
 
 export async function sendMail({ to, subject, text, html, from }: ISendMail) {

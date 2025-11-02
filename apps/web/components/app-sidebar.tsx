@@ -54,7 +54,7 @@ export default function AppSidebar({
     queryFn: getConnectedDevices,
   });
   useEffect(() => {
-    setInitialState(devices?.map((device: any) => device.body) || []);
+    setInitialState(devices?.map((device) => device.body) || []);
   }, [devices, setInitialState]);
   const pathname = usePathname();
   const session = authClient.useSession();
@@ -105,7 +105,7 @@ export default function AppSidebar({
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel>Devices</SelectLabel>
-                    {devices?.map((device: any) => (
+                    {devices?.map((device) => (
                       <SelectItem value={device.body} key={device.id}>
                         {device.body}
                       </SelectItem>

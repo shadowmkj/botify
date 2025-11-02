@@ -36,7 +36,7 @@ const AutorepliesServerComponent = async () => {
     },
   });
   console.log(JSON.stringify(devices));
-  const autoreplies = devices.flatMap((device: any) => device.autoreplies);
+  const autoreplies = devices.flatMap((device) => device.autoreplies);
   return <AutoreplyTable initialAutoreplies={autoreplies} />;
 };
 

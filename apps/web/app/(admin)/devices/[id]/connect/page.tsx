@@ -1,6 +1,5 @@
 "use client";
 import { logoutDevice } from "@/actions/device";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
     Card,
@@ -15,12 +14,6 @@ import { use, useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { io, Socket } from "socket.io-client";
 let socket: Socket;
-const InfoItem = ({ label, value }: { label: string; value: string }) => (
-    <div className="flex justify-between items-center py-2">
-        <span className="text-sm font-medium text-gray-500">{label}</span>
-        <span className="text-sm text-gray-900 dark:text-gray-100">{value}</span>
-    </div>
-);
 
 const WhatsappScannerPage = ({
     params,
@@ -65,12 +58,6 @@ const WhatsappScannerPage = ({
 
     const handleLogout = async () => {
         await logoutDevice(sessionId);
-    };
-    const userInfo = {
-        name: "Ahgem",
-        phone: "+917034983527",
-        status: "Coding my way through the world!",
-        avatarUrl: "https://placehold.co/100x100/EFEFEF/333?text=MJ",
     };
 
     return (

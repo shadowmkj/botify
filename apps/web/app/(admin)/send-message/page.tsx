@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useDeviceStore } from "@/store/device-store";
 import { sendMessageSchema, SendMessageValues } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
