@@ -34,7 +34,7 @@ export default function ForgotPasswordPage() {
     try {
       const { data, error } = await authClient.requestPasswordReset({
         email: values.email, // required
-        redirectTo: "http://localhost:3000/reset-password", // optional
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`, // optional
       });
       if (error) {
         throw error;

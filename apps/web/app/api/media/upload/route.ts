@@ -58,7 +58,7 @@ const meta = {
 // No meta file when serving statically; keep returning useful info
 
 const reqUrl = new URL(request.url);
-const url = `${reqUrl.origin}/media/${storedName}`;
+const url = `${process.env.NEXT_PUBLIC_APP_URL}/media/${storedName}`;
 
 return NextResponse.json({
   status: true,
