@@ -4,6 +4,7 @@ const ApidocPage = async () => {
       method: "POST",
       endpoint: "http://botify.codenik.in/api/messages/send",
       description: "Header Name:x-api-key",
+      value: "Value: Your API Key",
       body: {
         sender: +917012749946,
         to: +918943025837,
@@ -15,11 +16,12 @@ const ApidocPage = async () => {
       method: "POST",
       endpoint: "http://botify.codenik.in/api/messages/send",
       description: "Header Name:x-api-key",
+      value: "Value: Your API Key",
       body: {
         sender: +917012749946,
         to: +918943025837,
         messageType: "media",
-        title: "title text",
+        message: "media file",
         content: "Hello  this is only test",
       },
     },
@@ -66,6 +68,7 @@ const ApidocPage = async () => {
             <p className="text-gray-600 dark:text-gray-300 mb-4">
               {api.description}
             </p>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">{api.value}</p>
 
             {api.body && (
               <div>
