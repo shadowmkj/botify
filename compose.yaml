@@ -8,29 +8,16 @@ services:
       POSTGRES_DB: botify
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
   redis:
     image: redis:7-alpine
     restart: always
     volumes:
       - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
   migrate:
     image: ghcr.io/iamshadow666/botify:main
     restart: "no"
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     env_file:
       - production.env
     command: sh -lc "pnpm --filter @repo/db exec prisma migrate deploy"
@@ -42,12 +29,9 @@ services:
       - "3000:3000"
       - "3001:3001"
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
+      - postgres
+      - redis
+      - migrate
     env_file:
       - production.env
     environment:
