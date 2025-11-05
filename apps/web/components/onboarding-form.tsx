@@ -13,13 +13,14 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { formSchema } from "@/lib/auth-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 import { promoteFirstUser } from "@/actions/onboarding";
 
 export default function OnboardingForm() {
+    const router = useRouter();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: { name: "", email: "", password: "" },
@@ -39,7 +40,7 @@ export default function OnboardingForm() {
                         await authClient.signIn.email(
                             { email, password },
                             {
-                                onSuccess: () => redirect("/dashboard"),
+                                onSuccess: () => { router.push("/dashboard") },
                                 onError: (ctx) => { toast.error(ctx.error.message) },
                             }
                         );
