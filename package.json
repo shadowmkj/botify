@@ -16,6 +16,7 @@
     "generate": "turbo run generate",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:reset": "bun --cwd packages/db db:migrate:reset",
+    "migrate": "cp .env packages/db/ &&  cd packages/db && npx prisma migrate deploy",
     "db:push": "turbo run db:push",
     "db:seed": "turbo run db:seed",
     "studio": "cd packages/db && pnpx prisma studio"
