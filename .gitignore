@@ -24,6 +24,7 @@ build
 .DS_Store
 *.pem
 .env
+.env.prod
 
 # debug
 npm-debug.log*
