@@ -21,7 +21,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "ioredis": "^5.7.0",
+    "ioredis": "^5.8.2",
     "@repo/typescript-config": "workspace:*"
   }
 }

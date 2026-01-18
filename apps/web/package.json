@@ -63,6 +63,7 @@
     "ioredis": "^5.7.0",
     "libphonenumber-js": "^1.12.10",
     "lucide-react": "^0.536.0",
+    "mcp-handler": "^1.0.7",
     "motion": "^12.23.6",
     "multer": "^2.0.2",
     "next": "15.2.8",

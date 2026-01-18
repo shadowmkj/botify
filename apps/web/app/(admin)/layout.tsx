@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { UserProvider } from "@/context/UserContext";
+import { Toaster } from "@/components/ui/sonner";
 
 export default async function DashboardLayout({
   children,
@@ -21,6 +22,7 @@ export default async function DashboardLayout({
   const user = session?.user;
   return (
     <UserProvider user={user}>
+      <Toaster richColors position="top-right" />
       <SidebarProvider>
         <AppSidebar variant="inset" />
         <SidebarInset>

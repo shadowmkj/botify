@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+
 import { MessageService } from "@/lib/messageService";
 import { prisma } from "@repo/db";
 import { createMcpHandler } from "mcp-handler";
@@ -6,9 +6,9 @@ import fs from "fs";
 import { z } from "zod";
 
 const handler = async (req: Request) => {
-    const session = await auth.api.getMcpSession({
-        headers: req.headers
-    })
+    // const session = await auth.api.getMcpSession({
+    //     headers: req.headers
+    // })
     // if(!session){
     //     return new Response(null, {
     //         status: 401
@@ -28,86 +28,72 @@ const handler = async (req: Request) => {
                         content: [{ type: "text", text: `🎲 You rolled a ${value}!` }],
                     };
                 }
-            ),
-                server.tool(
-                    "send_message",
-                    "Sends a whatsapp message using Botify",
-                    {
-                        to: z.string().min(1),
-                        sender: z.string().min(1),
-                        message: z.string().min(1).optional(),
-                    },
-                    async ({ to, sender, message }) => {
-                        const user = await prisma.user.findFirst({
-                            where: {
-                                Device: { some: { body: sender } }
-                            },
-                        });
-                        if (!user) {
-                            return {
-                                content: [{ type: "text", text: `Error: Sender device not found.` }],
-                            };
-                        }
-                        const messageService = new MessageService(sender, user.id);
-                        await messageService.queueSendMessage(to, message || "");
+            );
+            server.tool(
+                "send_message",
+                "Sends a whatsapp message using Botify",
+                {
+                    to: z.string().min(1),
+                    sender: z.string().min(1),
+                    message: z.string().min(1).optional(),
+                },
+                async ({ to, sender, message }) => {
+                    const user = await prisma.user.findFirst({
+                        where: {
+                            Device: { some: { body: sender } }
+                        },
+                    });
+                    if (!user) {
                         return {
-                            content: [{ type: "text", text: `` }],
+                            content: [{ type: "text", text: `Error: Sender device not found.` }],
                         };
                     }
-                ),
-                server.tool(
-                    "get_number",
-                    "Get the number of a person from their name",
-                    { name: z.string() },
-                    async ({ name }) => {
+                    const messageService = new MessageService(sender, user.id);
+                    await messageService.queueSendMessage(to, message || "");
+                    return {
+                        content: [{ type: "text", text: `` }],
+                    };
+                }
+            );
+            server.tool(
+                "get_number",
+                "Get the number of a person from their name",
+                { name: z.string() },
+                async ({ name }) => {
+                    //TODO: This is a temporary solution. We should use a proper contact book.
                     const data = JSON.parse(fs.readFileSync('my-contacts.json', 'utf-8'));
-                    const contacts = data.find((c: any) => c.name.toLowerCase().includes(name.toLowerCase()));
+                    const contacts = data.find((c: { name: string }) => c.name.toLowerCase().includes(name.toLowerCase()));
                     if (!contacts) {
                         return {
                             content: [{ type: "text", text: `No contact found with the name ${name}` }],
                         };
                     }
                     if (contacts.length > 1) {
-                        const names = contacts.map((c: any) => c.name).join(", ");
+                        const names = contacts.map((c: { name: string }) => c.name).join(", ");
                         return {
                             content: [{ type: "text", text: `Multiple contacts found with the name ${name}: ${names}` }],
                         };
                     }
                     const contact = contacts.number;
                     console.log("contact", contacts)
-                        return {
-                            content: [{ type: "text", text: `The number of ${name} is ${contact}` }],
-                        };
-                    },
-                );
-                server.tool(
-                    "echo",
-                    "Echo a message",
-                    { message: z.string() },
-                    async ({ message }) => {
-                        return {
-                            content: [{ type: "text", text: `Tool echo: ${message}` }],
-                        };
-                    },
-                );
-        },
-        {
-            capabilities: {
-                tools: {
-                    echo: {
-                        description: "Echo a message",
-                    },
-                    roll_dice: {
-                        description: "Roll a dice",
-                    },
+                    return {
+                        content: [{ type: "text", text: `The number of ${name} is ${contact}` }],
+                    };
                 },
-            },
+            );
+            server.tool(
+                "echo",
+                "Echo a message",
+                { message: z.string() },
+                async ({ message }) => {
+                    return {
+                        content: [{ type: "text", text: `Tool echo: ${message}` }],
+                    };
+                },
+            );
         },
         {
-            redisUrl: process.env.REDIS_URL,
-            basePath: "/api",
-            verboseLogs: true,
-            maxDuration: 60,
+
         },
     )(req);
 }
