@@ -16,26 +16,32 @@ const handler = async (req: Request) => {
     // }
     return createMcpHandler(
         (server) => {
-            server.tool(
+            server.registerTool(
                 "roll_dice",
-                "Rolls an N-sided die",
                 {
-                    sides: z.number().int().min(2),
+                    title: "Roll Dice",
+                    description: "Rolls a dice with a specified number of sides and returns the result.",
+                    inputSchema: {
+                        sides: z.number().min(2).default(6),
+                    }
                 },
                 async ({ sides }) => {
-                    const value = 1 + Math.floor(Math.random() * sides);
+                    const result = Math.floor(Math.random() * sides) + 1;
                     return {
-                        content: [{ type: "text", text: `🎲 You rolled a ${value}!` }],
+                        content: [{ type: "text", text: `You rolled a ${result} on a ${sides}-sided dice.` }],
                     };
                 }
             );
-            server.tool(
+            server.registerTool(
                 "send_message",
-                "Sends a whatsapp message using Botify",
                 {
-                    to: z.string().min(1),
-                    sender: z.string().min(1),
-                    message: z.string().min(1).optional(),
+                    title: "Send Message",
+                    description: "Sends a message from a specified sender device to a recipient.",
+                    inputSchema: {
+                        to: z.string().min(1),
+                        sender: z.string().min(1),
+                        message: z.string().min(1).optional(),
+                    }
                 },
                 async ({ to, sender, message }) => {
                     const user = await prisma.user.findFirst({
@@ -55,10 +61,15 @@ const handler = async (req: Request) => {
                     };
                 }
             );
-            server.tool(
+            server.registerTool(
                 "get_number",
-                "Get the number of a person from their name",
-                { name: z.string() },
+                {
+                    title: "Get Contact Number",
+                    description: "Retrieves the phone number of a contact by name.",
+                    inputSchema: {
+                        name: z.string().min(1),
+                    }
+                },
                 async ({ name }) => {
                     //TODO: This is a temporary solution. We should use a proper contact book.
                     const data = JSON.parse(fs.readFileSync('my-contacts.json', 'utf-8'));
@@ -81,20 +92,14 @@ const handler = async (req: Request) => {
                     };
                 },
             );
-            server.tool(
-                "echo",
-                "Echo a message",
-                { message: z.string() },
-                async ({ message }) => {
-                    return {
-                        content: [{ type: "text", text: `Tool echo: ${message}` }],
-                    };
-                },
-            );
         },
         {
 
         },
+        {
+            basePath: "/api",
+            verboseLogs: true,
+        }
     )(req);
 }
 
