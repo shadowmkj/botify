@@ -115,7 +115,15 @@ export const logoutDevice = async (id: string) => {
             id: id
         }
     })
-    const queue = new Queue<WhatsappJob>(QUEUE_NAME, { connection: redis })
+    const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
+        connection:
+        {
+            host: process.env.REDIS_HOST || "localhost",
+            port: Number(process.env.REDIS_PORT) || 6379,
+            maxRetriesPerRequest: null
+        },
+
+    })
     await queue.add("logout", { sender: device?.body!, type: "logout" })
     return true
 }

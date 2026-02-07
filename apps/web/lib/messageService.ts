@@ -1,6 +1,5 @@
 import { prisma } from "@repo/db"
 import { Queue } from "bullmq"
-import { redis } from "@repo/redis"
 import { QUEUE_NAME } from "@/lib/constants/global"
 import type { WhatsappJob } from "@repo/types"
 
@@ -12,7 +11,13 @@ export class MessageService {
     constructor(sender: string, userId: string) {
         this.sender = sender
         this.userId = userId
-        this.queue = new Queue<WhatsappJob>(QUEUE_NAME, { connection: redis })
+        this.queue = new Queue<WhatsappJob>(QUEUE_NAME, {
+            connection: {
+                host: process.env.REDIS_HOST || "localhost",
+                port: Number(process.env.REDIS_PORT) || 6379,
+                maxRetriesPerRequest: null
+            },
+        })
     }
 
     async getUserWithPlan() {

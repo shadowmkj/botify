@@ -26,7 +26,7 @@ const reducer = (state: State, action: ActionType): State => {
         case "QR":
             return {
                 ...state,
-                qrCode: action.qr,
+                qrCode: action.qr!,
                 profilePic: "",
                 status: "QR code received",
             };
@@ -63,7 +63,7 @@ const useSocket = (sessionId: string) => {
         // Create socket connection with proper configuration
         const socketUrl =
             process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
-        
+
         const socket = io(socketUrl, {
             reconnection: true,
             reconnectionDelay: 1000,

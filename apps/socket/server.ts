@@ -18,8 +18,8 @@ console.log("NEXTJS_URL:", NEXTJS_URL);
 
 const redisQ = new Queue<WhatsappJob>(QUEUE_NAME, {
     connection: {
-        host: "localhost",
-        port: 6379,
+        host: process.env.REDIS_HOST || "localhost",
+        port: Number(process.env.REDIS_PORT) || 6379,
         maxRetriesPerRequest: null
     },
 })
@@ -45,7 +45,7 @@ subscriber.on('message', (channel: string, message: string) => {
 
 io.on('connection', (socket: Socket) => {
     console.log(`Socket.IO client connected: ${socket.id}`);
-    
+
     // Initialize subscription tracking for this socket
     socketSubscriptions.set(socket.id, new Set());
 
@@ -57,16 +57,16 @@ io.on('connection', (socket: Socket) => {
 
             if (!device || !device.body) {
                 console.error(`Device not found for sessionId: ${sessionId}`);
-                socket.emit('qr-update', JSON.stringify({ 
-                    event: 'LOGOUT', 
-                    error: 'Device not found' 
+                socket.emit('qr-update', JSON.stringify({
+                    event: 'LOGOUT',
+                    error: 'Device not found'
                 }));
                 return;
             }
 
             const roomId = device.body;
             const channel = `qr:${roomId}`;
-            
+
             // Join socket room
             socket.join(roomId);
             console.log(`Socket ${socket.id} joined room: ${roomId}`);
@@ -87,8 +87,8 @@ io.on('connection', (socket: Socket) => {
 
             // Check if job already exists before creating a new one
             const existingJob = await redisQ.getJob(roomId);
-            const shouldCreateJob = !existingJob || 
-                                   await existingJob.isCompleted() || 
+            const shouldCreateJob = !existingJob ||
+                                   await existingJob.isCompleted() ||
                                    await existingJob.isFailed();
 
             if (shouldCreateJob) {
@@ -106,26 +106,26 @@ io.on('connection', (socket: Socket) => {
             }
         } catch (error) {
             console.error('Error in subscribe-to-qr:', error);
-            socket.emit('qr-update', JSON.stringify({ 
-                event: 'LOGOUT', 
-                error: 'Subscription failed' 
+            socket.emit('qr-update', JSON.stringify({
+                event: 'LOGOUT',
+                error: 'Subscription failed'
             }));
         }
     });
 
     socket.on('disconnect', async () => {
         console.log(`Socket.IO client disconnected: ${socket.id}`);
-        
+
         try {
             // Get all channels this socket was subscribed to
             const channels = socketSubscriptions.get(socket.id);
-            
+
             if (channels) {
                 for (const channel of channels) {
                     // Decrease subscriber count for this channel
                     const currentCount = channelSubscribers.get(channel) || 0;
                     const newCount = Math.max(0, currentCount - 1);
-                    
+
                     if (newCount === 0) {
                         // No more subscribers for this channel, unsubscribe from Redis
                         await subscriber.unsubscribe(channel);
@@ -136,7 +136,7 @@ io.on('connection', (socket: Socket) => {
                         console.log(`Channel ${channel} still has ${newCount} subscriber(s)`);
                     }
                 }
-                
+
                 // Clean up socket's subscription tracking
                 socketSubscriptions.delete(socket.id);
             }
