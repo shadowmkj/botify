@@ -5,15 +5,14 @@ import {
     Card,
     CardContent,
     CardDescription,
+    CardFooter,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { SocketEvent } from "@repo/types";
+import useSocket from "@/hooks/use-socket";
 import Image from "next/image";
-import { use, useEffect, useState } from "react";
+import { use } from "react";
 import QRCode from "react-qr-code";
-import { io, Socket } from "socket.io-client";
-let socket: Socket;
 
 const WhatsappScannerPage = ({
     params,
@@ -21,41 +20,7 @@ const WhatsappScannerPage = ({
     params: Promise<{ id: string }>;
 }) => {
     const { id: sessionId } = use(params);
-    const [qrCode, setQrCode] = useState<string | null>(null);
-    const [status, setStatus] = useState("");
-    const [profilePic, setProfilePic] = useState("");
-
-    useEffect(() => {
-        const socketUrl =
-            process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
-
-        socket = io(socketUrl);
-
-        socket.on("qr-update", (message: string) => {
-            const data = JSON.parse(message) as SocketEvent;
-            console.log(data);
-            if (data.event == "QR") {
-                setQrCode(data.qr!);
-                setProfilePic("");
-                setStatus("Disconnected");
-            } else if (data.event == "OPEN") {
-                setQrCode(null);
-                setProfilePic(data.profile || "");
-                setStatus("Connected");
-            } else if (data.event == "LOGOUT") {
-                setQrCode(null);
-                setProfilePic("");
-                setStatus("Disconnected");
-            }
-        });
-
-        socket.emit("subscribe-to-qr", { sessionId });
-
-        return () => {
-            if (socket) socket.disconnect();
-        };
-    }, [sessionId]);
-
+    const { qrCode, status, profilePic } = useSocket(sessionId);
     const handleLogout = async () => {
         await logoutDevice(sessionId);
     };
@@ -64,16 +29,16 @@ const WhatsappScannerPage = ({
         <div className="flex flex-col items-center justify-center min-h-screen  p-4 sm:p-6 md:p-8">
             <div className="w-full max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-1">
                 {/* QR Code Scanner Section */}
-                <Card className="w-full max-w-lg mx-auto rounded-xl shadow-lg">
+                <Card className="w-full max-w-md mx-auto rounded-xl shadow-lg">
                     <CardHeader>
-                        <CardTitle className="text-2xl font-bold text-center">
+                        <CardTitle className="text-2xl font-bold text-center text-primary">
                             Scan QR Code
                         </CardTitle>
                         <CardDescription className="text-center">
-                            To link your WhatsApp account, scan this code with your phone.
+                            Open WhatsApp on your phone and scan the QR code to connect.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex flex-col items-center justify-center p-6">
+                    <CardContent className="flex flex-col items-center justify-center p-4">
                         {qrCode && (
                             <div className="bg-white p-4 rounded-lg flex items-center justify-center">
                                 <QRCode level="M" value={qrCode} />
@@ -88,7 +53,8 @@ const WhatsappScannerPage = ({
                                 className="rounded-full"
                             />
                         )}
-                        {!qrCode && status != "Connected" && <span>Loading..</span>}
+                        {(status === "Connecting..." || status === "Loading..") && <div className="flex items-center justify-center"><span className="text-gray-500 mt-4">{status}</span></div>}
+                        {status === "QR code received" && !qrCode && <div className="flex items-center justify-center"><span className="text-gray-500 mt-4">Scan the QR code to connect</span></div>}
                         {status === "Connected" && (
                             <div className="text-green-500 mt-4">Connected Successfully!</div>
                         )}
@@ -97,23 +63,25 @@ const WhatsappScannerPage = ({
                                 Disconnected. Please try again.
                             </div>
                         )}
-                        <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+                        <div className="mt-auto w-1/2 pt-4 flex justify-center">
+                            <Button
+                                onClick={handleLogout}
+                                className="w-full "
+                                variant={"outline"}
+                            >
+                                Log out
+                            </Button>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="flex justify-center items-center">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
                             Need help?{" "}
                             <a href="#" className="underline">
                                 Learn how to connect
                             </a>
                             .
                         </p>
-                        <div className="mt-auto w-half pt-4">
-                            <Button
-                                onClick={handleLogout}
-                                className="w-full "
-                                variant={"destructive"}
-                            >
-                                Log out
-                            </Button>
-                        </div>
-                    </CardContent>
+                    </CardFooter>
                 </Card>
 
                 {/* User Information Section */}
@@ -141,7 +109,7 @@ const WhatsappScannerPage = ({
                 </p>
               </div>
             </div>
-            <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+            <.div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
               <InfoItem label="Phone Number" value={userInfo.phone} />
               <InfoItem label="Status" value="Connected" />
               <InfoItem label="Device" value="Web Browser" />

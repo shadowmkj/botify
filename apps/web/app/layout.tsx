@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import NextTopLoader from "nextjs-toploader";
-import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "next-themes";
 import { QueryProvider } from "@/providers/query-provider";
 
@@ -41,7 +40,6 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <NextTopLoader showSpinner={false} height={6} />
-            <Toaster richColors position="top-right" />
             <main className="min-h-screen">{children}</main>
           </ThemeProvider>
         </QueryProvider>
