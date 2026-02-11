@@ -70,7 +70,7 @@ export class MessageService {
         receiver: string,
         message: string,
         media?: string,
-        opts?: { mediaType?: 'image' | 'video' | 'document'; fileName?: string; mimeType?: string }
+        opts?: { mediaType?: 'image' | 'video' | 'text' | 'document'; fileName?: string; mimeType?: string }
     ) {
         await this.assertCanQueue(1)
         return this.queue.add(
@@ -81,7 +81,7 @@ export class MessageService {
                 receiver,
                 message,
                 media,
-                mediaType: opts?.mediaType,
+                mediaType: opts?.mediaType?.toLowerCase() as "image" | "video" | "document" | undefined,
                 fileName: opts?.fileName,
                 mimeType: opts?.mimeType,
             },

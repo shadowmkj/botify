@@ -35,7 +35,7 @@ export async function verifyApiAccess(
     return { userId: result.key.userId, key: result.key }
   } catch (e) {
     if (e instanceof Response) throw e
-    // Unknown errors map to 401 to avoid info leaks
+    console.log(e)
     throw new Response(JSON.stringify({ error: "Invalid or unauthorized API key" }), {
       status: 401,
       headers: { "content-type": "application/json" },

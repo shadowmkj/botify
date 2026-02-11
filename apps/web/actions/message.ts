@@ -2,7 +2,7 @@
 
 import { MessageService } from "@/lib/messageService"
 import { phoneNumberSchema } from "@/types"
-import { prisma } from "@repo/db"
+import {  prisma } from "@repo/db"
 import z from "zod"
 
 const sendMessageZSchema = z.object({
@@ -10,7 +10,7 @@ const sendMessageZSchema = z.object({
   receiver: phoneNumberSchema,
   sender: phoneNumberSchema,
   media: z.string().optional(),
-  mediaType: z.enum(['image','video','document']).optional(),
+  mediaType: z.enum(['image', 'video', 'document']).optional(),
   fileName: z.string().optional(),
   mimeType: z.string().optional(),
 }).superRefine((data, ctx) => {
@@ -26,7 +26,7 @@ interface Props {
   receiver: string
   sender: string
   media?: string
-  mediaType?: 'image' | 'video' | 'document'
+  mediaType?: 'image' | 'video' | 'document' | 'text'
   fileName?: string
   mimeType?: string
 }
