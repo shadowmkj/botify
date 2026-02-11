@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-asserted-optional-chain */
 import { NextResponse } from 'next/server'
-import {  prisma } from '@repo/db'
+import { prisma } from '@repo/db'
 import { MessageService } from '@/lib/messageService'
 import { verifyApiAccess } from '@/lib/api-auth'
 import { PERMISSIONS_MESSAGES_SEND, PERMISSIONS_MESSAGES_SEND_MEDIA } from '@/lib/constants/auth'
@@ -35,9 +35,16 @@ async function ensureDir(dir: string) {
 }
 
 
-const saveMedia = async (mediaFile: File | null, baseUrl: string) => {
+const saveMedia = async (mediaFile: File | string | null, baseUrl: string) => {
     if (!mediaFile) {
         throw new Error('Media file is required for media messages')
+    }
+    if (typeof mediaFile === 'string') {
+        return {
+            mediaUrl: mediaFile,
+            fileName: path.basename(mediaFile),
+            mimeType: 'application/octet-stream'
+        } as MediaData
     }
 
     const maxBytes = Number(process.env.MEDIA_MAX_BYTES || 10 * 1024 * 1024)
@@ -77,7 +84,8 @@ export async function POST(request: Request) {
         let to: string
         let messageType: 'image' | 'video' | 'document' | 'text'
         let content: string
-        let mediaFile: File | null = null
+        let mediaFile: File | string | null = null
+        let isMediaUrl = false
         if (isMultipart(request)) {
             const formData = await request.formData()
             from = formData.get('from') as string | null
@@ -86,7 +94,10 @@ export async function POST(request: Request) {
             to = parsePhoneNumberFromString(to?.toString()!, "IN")?.number!
             messageType = formData.get('messageType')?.toString() as 'image' | 'video' | 'document' | 'text'
             content = formData.get('content') as string
-            mediaFile = formData.get('media') as File | null
+            mediaFile = formData.get('media') as File | null | string
+            if (mediaFile && typeof mediaFile === 'string') {
+                isMediaUrl = true
+            }
         } else {
             const body = await request.json()
             from = body.from
