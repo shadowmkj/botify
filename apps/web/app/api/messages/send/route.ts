@@ -109,7 +109,7 @@ export async function POST(request: Request) {
         //TODO: Validate here
         if (isMedia) {
             try {
-                mediaData = await saveMedia(mediaFile, new URL(request.url).origin)
+                mediaData = await saveMedia(mediaFile, process.env.NEXT_PUBLIC_APP_URL!)
                 const device = await prisma.device.findUnique({ where: { body: from }, select: { userId: true } })
 
                 if (!device) {
