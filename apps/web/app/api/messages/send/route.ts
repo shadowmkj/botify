@@ -85,6 +85,7 @@ export async function POST(request: Request) {
         let messageType: 'image' | 'video' | 'document' | 'text'
         let content: string
         let mediaFile: File | string | null = null
+        let mediaUrl: string = ""
         let isMediaUrl = false
         if (isMultipart(request)) {
             const formData = await request.formData()
@@ -106,8 +107,13 @@ export async function POST(request: Request) {
             to = parsePhoneNumberFromString(to!, "IN")?.number!
             messageType = body.messageType
             content = body.content || ''
+            mediaUrl = body.media
+            if (mediaUrl.length > 0) {
+                isMediaUrl = true
+            }
         }
 
+        console.log(from, to, mediaFile, mediaUrl);
         if (!to || !messageType || !from) {
             return NextResponse.json({ error: 'Missing required fields: to, messageType, sender' }, { status: 400 })
         }
@@ -120,7 +126,7 @@ export async function POST(request: Request) {
         //TODO: Validate here
         if (isMedia) {
             try {
-                mediaData = await saveMedia(mediaFile, process.env.NEXT_PUBLIC_APP_URL!)
+                mediaData = await saveMedia(mediaUrl.length > 0 ? mediaUrl : mediaFile, process.env.NEXT_PUBLIC_APP_URL!)
                 const device = await prisma.device.findUnique({ where: { body: from }, select: { userId: true } })
 
                 if (!device) {
