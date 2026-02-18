@@ -86,7 +86,6 @@ export async function POST(request: Request) {
         let content: string
         let mediaFile: File | string | null = null
         let mediaUrl: string = ""
-        let isMediaUrl = false
         if (isMultipart(request)) {
             const formData = await request.formData()
             from = formData.get('from') as string | null
@@ -96,9 +95,6 @@ export async function POST(request: Request) {
             messageType = formData.get('messageType')?.toString() as 'image' | 'video' | 'document' | 'text'
             content = formData.get('content') as string
             mediaFile = formData.get('media') as File | null | string
-            if (mediaFile && typeof mediaFile === 'string') {
-                isMediaUrl = true
-            }
         } else {
             const body = await request.json()
             from = body.from
@@ -108,9 +104,6 @@ export async function POST(request: Request) {
             messageType = body.messageType
             content = body.content || ''
             mediaUrl = body.media
-            if (mediaUrl.length > 0) {
-                isMediaUrl = true
-            }
         }
 
         console.log(from, to, mediaFile, mediaUrl);
