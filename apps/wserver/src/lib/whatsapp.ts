@@ -5,99 +5,139 @@ import { redis } from "@repo/redis";
 import { msgRetryCounterCache, sessions } from "../worker";
 import logger from "../utils/logger";
 import { Boom } from "@hapi/boom";
-import { prisma } from '@repo/db'
 import { updateDeviceStatus } from "./helper";
 import initAutoreply from "../autoreply";
 
-export async function startWhatsAppSession(number: string): Promise<WASocket> {
+const startingPromises = new Map<string, Promise<WASocket>>();
+
+export async function startWhatsAppSession(number: string, fromJob: boolean = false): Promise<WASocket> {
     logger.info(`Starting WhatsApp session for: ${number}`);
-    if (sessions.has(number)) {
+
+    if (sessions.has(number) && !fromJob) {
         logger.info(`Session for ${number} already exists.`);
+        return sessions.get(number)
+    }
+
+    if (fromJob) {
         sessions.delete(number)
     }
-    logger.info(`Starting new Baileys session: ${number}`);
-    const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
-    const { version } = await fetchLatestBaileysVersion();
-    const sock = makeWASocket({
-        version,
-        logger,
-        auth: {
-            creds: state.creds,
-            keys: makeCacheableSignalKeyStore(state.keys, logger),
-        },
-        markOnlineOnConnect: false,
-        msgRetryCounterCache,
-        generateHighQualityLinkPreview: true,
-    });
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        if (qr) {
-            const data = {
-                qr: qr,
-                event: "QR"
-            }
-            if (connection != 'open') {
-                const res = await redis.publish(`qr:${number}`, JSON.stringify(data));
-                console.log(qr)
-                logger.info(`QR code for ${number} published to Redis channel: qr:${number}, result: ${res}`);
-                qrcode.generate(qr, { small: true }, (qrcode) => {
-                    console.log(qrcode);
-                });
-            }
-        }
-        switch (connection) {
-            case 'close':
-                const statusCode = (lastDisconnect?.error as Boom)?.output.statusCode;
-                const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-                if (!shouldReconnect) {
-                    logger.info(`Session for ${number} logged out. Cleaning up session data.`);
-                    await deleteSessionFromRedis(redis, `${number}`);
-                    await updateDeviceStatus(number, "Disconnected");
-                }
-                sessions.delete(number);
-                if ((lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.restartRequired) {
-                    await startWhatsAppSession(number);
-                }
-                if (statusCode === DisconnectReason.loggedOut) {
-                    await deleteSessionFromRedis(redis, `${number}`);
+
+    if (startingPromises.has(number)) {
+        logger.warn(`Session ${number} is already in the process of starting. Ignoring duplicate request.`);
+        return startingPromises.get(number) as Promise<WASocket>;
+    }
+
+
+    const startupPromise = (async () => {
+        logger.info(`Starting new Baileys session: ${number}`);
+        try {
+
+            const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
+            const { version } = await fetchLatestBaileysVersion();
+            const sock = makeWASocket({
+                version,
+                auth: {
+                    creds: state.creds,
+                    keys: makeCacheableSignalKeyStore(state.keys, logger),
+                },
+                connectTimeoutMs: 30000,
+                keepAliveIntervalMs: 10000,
+                syncFullHistory: false,
+                retryRequestDelayMs: 2000,
+                markOnlineOnConnect: false,
+                msgRetryCounterCache,
+                generateHighQualityLinkPreview: true,
+            });
+
+            // OPTIM:
+            sessions.set(number, sock);
+
+            sock.ev.on('connection.update', async (update) => {
+                const { connection, lastDisconnect, qr } = update;
+                console.log(sessions)
+                if (qr) {
                     const data = {
-                        event: "LOGOUT"
+                        qr: qr,
+                        event: "QR"
                     }
-                    await updateDeviceStatus(number, "Disconnected");
-                    const res = await redis.publish(`qr:${number}`, JSON.stringify(data));
-                    await startWhatsAppSession(number)
-                }
-                break;
-            case 'connecting':
-                // await updateDeviceStatus(number, "Disconnected");
-                break;
-            case 'open':
-                let data;
-                try {
-                    const profile = await sock.profilePictureUrl(sock.user?.id!)
-                    data = {
-                        event: "OPEN",
-                        profile: profile,
-                    }
-                } catch (error) {
-                    console.error("Error fetching profile picture:", error);
-                    data = {
-                        event: "OPEN",
-                        profile: "https://avatar.iran.liara.run/public/40",
+                    if (connection != 'open') {
+                        redis.publish(`qr:${number}`, JSON.stringify(data)).then(res => {
+                            logger.info(`QR code for ${number} published to Redis channel: qr:${number}, result: ${res}`);
+                        })
+                        qrcode.generate(qr, { small: true }, (qrcode) => {
+                            console.log(qrcode);
+                        });
                     }
                 }
-                await updateDeviceStatus(number, "Connected");
-                const res = await redis.publish(`qr:${number}`, JSON.stringify(data));
-                if (!sessions.get(number)) {
-                    sessions.set(number, sock);
+                switch (connection) {
+                    case 'close':
+                        const statusCode = (lastDisconnect?.error as Boom)?.output.statusCode;
+                        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+                        if (!shouldReconnect) {
+                            logger.info(`Session for ${number} logged out. Cleaning up session data.`);
+                            sessions.delete(number);
+                            const data = {
+                                event: "LOGOUT"
+                            }
+                            await Promise.all([
+                                deleteSessionFromRedis(redis, `${number}`),
+                                updateDeviceStatus(number, "Disconnected"),
+                                redis.publish(`qr:${number}`, JSON.stringify(data))
+                            ])
+
+                            startWhatsAppSession(number).catch(err => {
+                                logger.error(`Failed to restart: ${number}\n Error: ${err}`)
+                            })
+                        }
+                        else if ((lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.restartRequired) {
+                            logger.info(`Restarting session ${number}`)
+                            sessions.delete(number);
+                            startWhatsAppSession(number).catch(err => {
+                                logger.error(`Failed to restart: ${number}\n Error: ${err}`)
+                            })
+                        } else {
+                            logger.info(`Connection closed for ${number} (Status: ${statusCode}). Reconnecting...`);
+                            startWhatsAppSession(number).catch(err => {
+                                logger.error(`Failed to reconnect: ${number}\n Error: ${err}`)
+                            });
+                        }
+                        break;
+                    case 'open':
+                        let profile = "https://avatar.iran.liara.run/public/40"
+                        try {
+                            profile = await sock.profilePictureUrl(sock.user?.id!) || profile
+                        } catch (error) {
+                            console.error("Error fetching profile picture:", error);
+                        }
+                        const data = {
+                            event: "OPEN",
+                            profile: profile
+                        }
+
+                        await Promise.all([
+                            updateDeviceStatus(number, "Connected"),
+                            redis.publish(`qr:${number}`, JSON.stringify(data))
+                        ])
+
+                        break;
                 }
-                break;
+            });
+            sock.ev.on('creds.update', saveCreds);
+            sock.ev.on('messages.upsert', async (m) => {
+                initAutoreply(m, number)
+            })
+            return sock;
         }
-    });
-    sock.ev.on('creds.update', saveCreds);
-    sock.ev.on('messages.upsert', async (m) => {
-        initAutoreply(m, number)
-    })
-    return sock;
+        catch (error) {
+            logger.error(`Critical error starting session for ${number}: ${error}`);
+            sessions.delete(number);
+            throw error;
+        }
+        finally {
+            startingPromises.delete(number);
+        }
+    })();
+    startingPromises.set(number, startupPromise)
+    return startupPromise
 }
 
