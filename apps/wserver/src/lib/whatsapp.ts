@@ -10,7 +10,9 @@ import initAutoreply from "../autoreply";
 
 const startingPromises = new Map<string, Promise<WASocket>>();
 
-export async function startWhatsAppSession(number: string, fromJob: boolean = false): Promise<WASocket> {
+export async function startWhatsAppSession(
+    number: string,
+    fromJob: boolean = false): Promise<WASocket> {
     logger.info(`Starting WhatsApp session for: ${number}`);
 
     if (sessions.has(number) && !fromJob) {
@@ -23,7 +25,8 @@ export async function startWhatsAppSession(number: string, fromJob: boolean = fa
     }
 
     if (startingPromises.has(number)) {
-        logger.warn(`Session ${number} is already in the process of starting. Ignoring duplicate request.`);
+        logger.warn(`Session ${number} is already in the process of starting.
+                    Ignoring duplicate request.`);
         return startingPromises.get(number) as Promise<WASocket>;
     }
 
@@ -31,7 +34,6 @@ export async function startWhatsAppSession(number: string, fromJob: boolean = fa
     const startupPromise = (async () => {
         logger.info(`Starting new Baileys session: ${number}`);
         try {
-
             const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
             const { version } = await fetchLatestBaileysVersion();
             const sock = makeWASocket({
@@ -62,7 +64,8 @@ export async function startWhatsAppSession(number: string, fromJob: boolean = fa
                     }
                     if (connection != 'open') {
                         redis.publish(`qr:${number}`, JSON.stringify(data)).then(res => {
-                            logger.info(`QR code for ${number} published to Redis channel: qr:${number}, result: ${res}`);
+                            logger.info(`QR code for ${number} published to Redis channel: qr:${number},
+                            result: ${res}`);
                         })
                         qrcode.generate(qr, { small: true }, (qrcode) => {
                             console.log(qrcode);

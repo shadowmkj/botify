@@ -7,7 +7,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "tsup": "^8.0.2"
+    "tsup": "^8.5.1"
   },
   "exports": {
     ".": {
@@ -22,8 +22,8 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "ioredis": "^5.7.0",
-    "libphonenumber-js": "^1.12.10",
-    "zod": "^4.0.17"
+    "ioredis": "^5.9.3",
+    "libphonenumber-js": "^1.12.37",
+    "zod": "^4.3.6"
   }
 }
