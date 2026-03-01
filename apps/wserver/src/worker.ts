@@ -8,9 +8,10 @@ import { prisma } from '@repo/db';
 import { phoneNumberSchema, type WhatsappJob } from '@repo/types';
 import NodeCache from 'node-cache';
 import dotenv from 'dotenv';
+import { WASocket } from 'baileys';
 dotenv.config();
 
-export const sessions = new Map();
+export const sessions: Map<string, WASocket> = new Map();
 export const msgRetryCounterCache = new NodeCache();
 
 const queue = new Queue<WhatsappJob>(QUEUE_NAME, {

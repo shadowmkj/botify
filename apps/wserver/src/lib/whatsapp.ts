@@ -17,7 +17,12 @@ export async function startWhatsAppSession(
 
     if (sessions.has(number) && !fromJob) {
         logger.info(`Session for ${number} already exists.`);
-        return sessions.get(number)
+        let curr_socket = sessions.get(number);
+        if (curr_socket?.ws.isOpen) {
+            return sessions.get(number) as WASocket
+        } else {
+            sessions.delete(number)
+        }
     }
 
     if (fromJob) {
@@ -42,6 +47,7 @@ export async function startWhatsAppSession(
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, logger),
                 },
+                logger,
                 connectTimeoutMs: 30000,
                 keepAliveIntervalMs: 10000,
                 syncFullHistory: false,
@@ -98,9 +104,19 @@ export async function startWhatsAppSession(
                             startWhatsAppSession(number).catch(err => {
                                 logger.error(`Failed to restart: ${number}\n Error: ${err}`)
                             })
-                        } else {
+                        } else if ((lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.connectionReplaced) {
+                            const data = {
+                                event: "LOGOUT"
+                            }
+                            await Promise.all([
+                                deleteSessionFromRedis(redis, `${number}`),
+                                updateDeviceStatus(number, "Disconnected"),
+                                redis.publish(`qr:${number}`, JSON.stringify(data))
+                            ])
+                        }
+                        else {
                             logger.info(`Connection closed for ${number} (Status: ${statusCode}). Reconnecting...`);
-                            startWhatsAppSession(number).catch(err => {
+                            startWhatsAppSession(number, true).catch(err => {
                                 logger.error(`Failed to reconnect: ${number}\n Error: ${err}`)
                             });
                         }
