@@ -1,7 +1,7 @@
 import { prisma } from "@repo/db"
 import { Queue } from "bullmq"
 import { QUEUE_NAME } from "@/lib/constants/global"
-import type { WhatsappJob } from "@repo/types"
+import type { NativeButton, WhatsappJob } from "@repo/types"
 
 export class MessageService {
     sender: string
@@ -64,6 +64,24 @@ export class MessageService {
         }
 
         return { ok: true as const, left, limit }
+    }
+
+    async queueButtonMessage(receiver: string,
+        message: string, text: string, title: string, footer: string, buttons: NativeButton[]) {
+        return this.queue.add(
+            "send-button",
+            {
+                type: "send-button",
+                sender: this.sender,
+                receiver,
+                title,
+                text,
+                footer,
+                buttons
+            },
+            { attempts: 3, removeOnComplete: true, removeOnFail: true }
+        )
+
     }
 
     async queueSendMessage(
