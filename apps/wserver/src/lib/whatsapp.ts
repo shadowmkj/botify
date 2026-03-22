@@ -1,4 +1,4 @@
-import makeWASocket, { DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, WASocket } from "baileys";
+import makeWASocket, { Browsers, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, WASocket } from "baileys";
 import qrcode from 'qrcode-terminal';
 import { deleteSessionFromRedis, useRedisAuthState } from "../auth/redis-auth";
 import { redis } from "@repo/redis";
@@ -14,6 +14,7 @@ export async function startWhatsAppSession(
     number: string,
     fromJob: boolean = false): Promise<WASocket> {
     logger.info(`Starting WhatsApp session for: ${number}`);
+
 
     if (sessions.has(number) && !fromJob) {
         logger.info(`Session for ${number} already exists.`);
@@ -38,6 +39,7 @@ export async function startWhatsAppSession(
 
     const startupPromise = (async () => {
         logger.info(`Starting new Baileys session: ${number}`);
+        let lastConnectionUpdate = Date.now();
         try {
             const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
             const { version } = await fetchLatestBaileysVersion();
@@ -47,6 +49,7 @@ export async function startWhatsAppSession(
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, logger),
                 },
+                browser: Browsers.macOS("Botify"),
                 logger,
                 connectTimeoutMs: 30000,
                 keepAliveIntervalMs: 10000,
@@ -61,6 +64,7 @@ export async function startWhatsAppSession(
             sessions.set(number, sock);
 
             sock.ev.on('connection.update', async (update) => {
+                lastConnectionUpdate = Date.now();
                 const { connection, lastDisconnect, qr } = update;
                 console.log(sessions)
                 if (qr) {
@@ -145,6 +149,21 @@ export async function startWhatsAppSession(
             sock.ev.on('messages.upsert', async (m) => {
                 initAutoreply(m, number)
             })
+            setInterval(() => {
+                const silentMs = Date.now() - lastConnectionUpdate;
+                if (silentMs > 120000) {
+                    console.warn(`No connection activity for ${Math.round(silentMs / 1000)}s — forcing disconnect`);
+                    sock.end(new Error("Zombie connection detected"));
+                    sessions.delete(number)
+                    Promise.all([
+                        deleteSessionFromRedis(redis, `${number}`),
+                        updateDeviceStatus(number, "Disconnected"),
+                        redis.publish(`qr:${number}`, JSON.stringify({
+                            event: "LOGOUT"
+                        }))
+                    ])
+                }
+            }, 30000);
             return sock;
         }
         catch (error) {

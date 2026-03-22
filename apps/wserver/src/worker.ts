@@ -9,6 +9,8 @@ import { phoneNumberSchema, type WhatsappJob } from '@repo/types';
 import NodeCache from 'node-cache';
 import dotenv from 'dotenv';
 import { WASocket } from 'baileys';
+const { sendButtons, sendInteractiveMessage } = require('baileys_helper');
+
 dotenv.config();
 
 export const sessions: Map<string, WASocket> = new Map();
@@ -25,6 +27,59 @@ new Worker<WhatsappJob>(
         switch (job.data.type) {
             case 'connect-whatsapp': {
                 await startWhatsAppSession(job.data.sender, true);
+                break;
+            }
+            case 'send-button': {
+                const {
+                    sender,
+                    receiver,
+                    title,
+                    text,
+                    footer,
+                    buttons
+                } = job.data;
+                const { success, data: validatedSender } =
+                    phoneNumberSchema.safeParse(sender);
+                if (success === false) {
+                    logger.error(`Invalid sender number: ${sender}`);
+                    break;
+                }
+                const sock = sessions.get(validatedSender);
+                if (sock) {
+                    try {
+                        console.log(
+                            `Sending message to ${receiver} from session ${validatedSender}`,
+                        );
+                        console.log(JSON.stringify(buttons))
+                        const result = await sock.onWhatsApp(receiver);
+                        let response;
+                        const res = await sendButtons(sock, result ? result[0].jid : '', {
+                            title,
+                            text,
+                            footer,
+                            buttons
+                        });
+                        // const resp = await sendInteractiveMessage(sock, result ? result[0].jid : '', {
+                        //     text,
+                        //     footer,
+                        //     interactiveButtons: buttons
+                        // }, {
+                        //     additionalNodes: [
+                        //         {
+                        //             tag: "biz", attrs: { experimental_flag: '1' }
+                        //         }]
+                        // });
+                        // logger.error(resp)
+                        console.log(res)
+                        // response = await sock.sendMessage(result ? result[0].jid : '', {
+                        //     text: "Hello",
+                        // });
+                    }
+                    catch (error) {
+                        console.log(error)
+                    }
+                }
+
                 break;
             }
             case 'send-message': {
