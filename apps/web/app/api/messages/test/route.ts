@@ -5,29 +5,40 @@ import z from 'zod';
 export async function GET(request: Request) {
     // return NextResponse.json({ status: true })
     const raw_buttons: RawButton[] = [
-        // {
-        //     name: "quick_reply",
-        //     id: 'a',
-        //     text: "Reply"
-        // },
-        // {
-        //     name: "cta_call",
-        //     buttonParamsJson: {
-        //         display_text: "Call me",
-        //         phone_number: "+917902708908"
-        //     }
-        // },
-        // {
-        //     name: "cta_copy",
-        //     buttonParamsJson: {
-        //         display_text: "Copy me",
-        //         copy_code: "a"
-        //     }
-        // },
+        {
+            name: "quick_reply",
+            buttonParamsJson: {
+                display_text: "Reply Now",
+                id: "I replieed"
+            }
+        },
+        {
+            name: "cta_call",
+            buttonParamsJson: {
+                display_text: "Call me",
+                phone_number: "+917902708908"
+            }
+        },
+        {
+            name: "cta_copy",
+            buttonParamsJson: {
+                display_text: "Copy me",
+                copy_code: "a"
+            }
+        },
+        {
+            name: "send_location", buttonParamsJson: { display_text: "My loc" }
+        },
+        {
+            name: "cta_url", buttonParamsJson: {
+                display_text: "My website",
+                url: "https://google.com"
+            }
+        },
         {
             name: "single_select",
             buttonParamsJson: {
-                title: "Test",
+                title: "Multi select",
                 sections: [{
                     title: "Section 1",
                     rows: [{
@@ -42,6 +53,7 @@ export async function GET(request: Request) {
                 }]
             }
         }
+
 
     ];
     const buttons = z.array(NativeButtonSchema).parse(raw_buttons);

@@ -36,8 +36,17 @@ export const phoneNumberSchema = z
 
 const QuickReplySchema = z.object({
     name: z.literal('quick_reply'),
-    id: z.string(),
-    text: z.string()
+    buttonParamsJson: z.object({
+        display_text: z.string(),
+        id: z.string()
+    }).transform((val) => JSON.stringify(val))
+})
+
+const SendLocationSchema = z.object({
+    name: z.literal('send_location'),
+    buttonParamsJson: z.object({
+        display_text: z.string().optional(),
+    }).transform((val) => JSON.stringify(val))
 })
 
 const CtaCopyButton = z.object({
@@ -53,6 +62,21 @@ const CtaCallButton = z.object({
     buttonParamsJson: z.object({
         display_text: z.string(),
         phone_number: z.string()
+    }).transform((val) => JSON.stringify(val))
+})
+
+const CtaUrlButton = z.object({
+    name: z.literal('cta_url'),
+    buttonParamsJson: z.object({
+        display_text: z.string(),
+        url: z.url()
+    }).transform((val) => JSON.stringify(val))
+})
+
+const CtaCatalogButton = z.object({
+    name: z.literal('cta_catalog'),
+    buttonParamsJson: z.object({
+        display_text: z.string().optional(),
     }).transform((val) => JSON.stringify(val))
 })
 
@@ -73,7 +97,14 @@ const SingleSelectSchema = z.object({
     }).transform((val) => JSON.stringify(val))
 })
 
-export const NativeButtonSchema = z.discriminatedUnion("name", [QuickReplySchema, CtaCallButton, CtaCopyButton, SingleSelectSchema])
+export const NativeButtonSchema = z.discriminatedUnion("name",
+    [QuickReplySchema,
+        CtaCatalogButton,
+        CtaUrlButton,
+        SendLocationSchema,
+        CtaCallButton,
+        CtaCopyButton,
+        SingleSelectSchema])
 
 export type NativeButton = z.infer<typeof NativeButtonSchema>
 export type RawButton = z.input<typeof NativeButtonSchema>

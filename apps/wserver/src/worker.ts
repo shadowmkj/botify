@@ -53,24 +53,19 @@ new Worker<WhatsappJob>(
                         console.log(JSON.stringify(buttons))
                         const result = await sock.onWhatsApp(receiver);
                         let response;
-                        const res = await sendButtons(sock, result ? result[0].jid : '', {
-                            title,
-                            text,
-                            footer,
-                            buttons
-                        });
-                        // const resp = await sendInteractiveMessage(sock, result ? result[0].jid : '', {
+                        // const res = await sendButtons(sock, result ? result[0].jid : '', {
+                        //     title,
                         //     text,
                         //     footer,
-                        //     interactiveButtons: buttons
-                        // }, {
-                        //     additionalNodes: [
-                        //         {
-                        //             tag: "biz", attrs: { experimental_flag: '1' }
-                        //         }]
+                        //     buttons
                         // });
-                        // logger.error(resp)
-                        console.log(res)
+                        const resp = await sendInteractiveMessage(sock, result ? result[0].jid : '', {
+                            text,
+                            footer,
+                            interactiveButtons: buttons
+                        });
+                        logger.error(resp)
+                        // console.log(res)
                         // response = await sock.sendMessage(result ? result[0].jid : '', {
                         //     text: "Hello",
                         // });
