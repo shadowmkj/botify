@@ -1,14 +1,7 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@repo/db";
-import { MessageService } from "@/lib/messageService";
 import { verifyHMAC } from "@/lib/common";
-
-export const config = {
-    api: {
-        bodyParser: false,
-    },
-};
-
+import { MessageService } from "@/lib/messageService";
+import { prisma } from "@repo/db";
+import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
     const rawBody = Buffer.from(await request.arrayBuffer());
@@ -17,7 +10,6 @@ export async function POST(request: Request) {
     console.log(body)
     const shopifyDomain = request.headers.get('x-shopify-shop-domain')
     const shopifyKey = request.headers.get('x-shopify-hmac-sha256')
-    const phone: string | null = body.customer.phone
 
     const user = await prisma.user.findFirst({
         where: {
@@ -39,15 +31,19 @@ export async function POST(request: Request) {
     if (shopifyKey && user.shopifyKey) {
         const isValid = verifyHMAC(rawBody, shopifyKey, user.shopifyKey)
         console.log("VALIDITY: ", isValid, shopifyDomain)
-        const svc = new MessageService(user.Device[0].body, user.id)
-        const content = "Hi Thank you for Shopping with us! This is a test message"
-        console.log("Number: ", body.shipping_address.phone)
-        await svc.queueSendMessage("+917012749946", content)
-        return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
+        if (isValid) {
+            const svc = new MessageService(user.Device[0].body, user.id)
+            const content = `${body.title} has been updated`
+            await svc.queueSendMessage("+917012749946", content)
+            return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
+        } else {
+            return NextResponse.json({ error: "Invalid shopifyKey" }, { status: 404 })
+        }
 
     } else {
         console.log("VALIDITY: ", false, shopifyDomain)
     }
 
-    return NextResponse.json(body)
+    return NextResponse.json({ error: "Invalid shopifyKey" }, { status: 404 })
 }
+

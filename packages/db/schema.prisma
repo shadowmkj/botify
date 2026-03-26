@@ -30,6 +30,8 @@ model User {
     banExpiresAt  DateTime?
     Contact       Contact[]
     ContactGroup  ContactGroup[]
+    shopifyKey    String?
+    shopifyDomain String?
     oauthapplications OauthApplication[]
     oauthaccesstokens OauthAccessToken[]
     oauthconsents     OauthConsent[]
