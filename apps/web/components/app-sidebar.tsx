@@ -23,6 +23,8 @@ import {
   Users,
   CreditCard,
   Key,
+  Settings,
+  LayoutTemplate,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -189,6 +191,19 @@ export default function AppSidebar({
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
+              isActive={pathname.startsWith("/templates")}
+              size="lg"
+            >
+              <Link href="/templates" className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                  <LayoutTemplate />
+                </div>
+                <span className={`text-sm font-medium`}>Templates</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
               isActive={pathname.startsWith("/settings/api-keys")}
               size="lg"
             >
@@ -200,6 +215,22 @@ export default function AppSidebar({
                   <Key />
                 </div>
                 <span className={`text-sm font-medium`}>API Keys</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              isActive={pathname.startsWith("/settings/shopify")}
+              size="lg"
+            >
+              <Link
+                href="/settings/shopify"
+                className="flex items-center gap-3"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10">
+                  <Settings />
+                </div>
+                <span className={`text-sm font-medium`}>Settings</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

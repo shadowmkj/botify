@@ -24,7 +24,8 @@ export async function POST(request: Request) {
             shopifyDomain: shopifyDomain
         },
         include: {
-            Device: true
+            Device: true,
+            shopifyTemplate: true
         }
     })
 
@@ -40,9 +41,18 @@ export async function POST(request: Request) {
         const isValid = verifyHMAC(rawBody, shopifyKey, user.shopifyKey)
         console.log("VALIDITY: ", isValid, shopifyDomain)
         const svc = new MessageService(user.Device[0].body, user.id)
-        const content = "Hi Thank you for Shopping with us! This is a test message"
-        console.log("Number: ", body.shipping_address.phone)
-        await svc.queueSendMessage("+917012749946", content)
+
+        let content = "Hi Thank you for Shopping with us! This is a test message"
+        if (user.shopifyTemplate) {
+            const { parseTemplate } = await import('@/lib/templateParser')
+            content = parseTemplate(user.shopifyTemplate.content, body)
+        }
+
+        console.log("Number: ", body.shipping_address?.phone || phone)
+        // const targetPhone = body.shipping_address?.phone || phone || "+917902708908";
+        const targetPhone = "+917902708908";
+
+        await svc.queueSendMessage(targetPhone, content)
         return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
 
     } else {

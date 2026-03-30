@@ -32,6 +32,9 @@ model User {
     ContactGroup  ContactGroup[]
     shopifyKey    String?
     shopifyDomain String?
+    shopifyTemplateId String?
+    shopifyTemplate   MessageTemplate? @relation("ShopifyTemplate", fields: [shopifyTemplateId], references: [id])
+    messageTemplates  MessageTemplate[] @relation("UserMessageTemplates")
     oauthapplications OauthApplication[]
     oauthaccesstokens OauthAccessToken[]
     oauthconsents     OauthConsent[]
@@ -278,5 +281,17 @@ model Autoreply {
     reply    String
     device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
     deviceId String
+}
+
+model MessageTemplate {
+    id          String   @id @default(uuid())
+    name        String
+    content     String
+    type        String
+    userId      String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+    user        User     @relation("UserMessageTemplates", fields: [userId], references: [id], onDelete: Cascade)
+    usersUsedForShopify User[] @relation("ShopifyTemplate")
 }
 
