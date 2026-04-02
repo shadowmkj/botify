@@ -1,69 +1,110 @@
 "use client";
 import { useState } from "react";
 import type { ButtonMessagePayload } from "./ButtonMessageTypes";
-import { ChevronDown, ChevronUp, Link, Phone, MessageSquare, Copy, List } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Link,
+  Phone,
+  MessageSquare,
+  Copy,
+  List,
+  Code2,
+} from "lucide-react";
 
 interface ButtonPreviewProps {
   payload: ButtonMessagePayload;
 }
 
 const BUTTON_ICONS: Record<string, React.ReactNode> = {
-  quick_reply: <MessageSquare className="h-3.5 w-3.5" />,
-  cta_url: <Link className="h-3.5 w-3.5" />,
-  cta_call: <Phone className="h-3.5 w-3.5" />,
-  cta_copy: <Copy className="h-3.5 w-3.5" />,
-  single_select: <List className="h-3.5 w-3.5" />,
+  quick_reply: <MessageSquare className="h-4 w-4" />,
+  cta_url: <Link className="h-4 w-4" />,
+  cta_call: <Phone className="h-4 w-4" />,
+  cta_copy: <Copy className="h-4 w-4" />,
+  single_select: <List className="h-4 w-4" />,
 };
 
 export default function ButtonPreview({ payload }: ButtonPreviewProps) {
   const [showJson, setShowJson] = useState(false);
 
-  const hasContent =
-    payload.header || payload.body || payload.buttons.length > 0;
+  const hasContent = payload.header || payload.body || payload.buttons.length > 0;
 
   return (
-    <div className="flex flex-col gap-4 h-full">
-      {/* Phone frame */}
-      <div className="flex-1 flex flex-col items-center">
-        <p className="text-xs text-muted-foreground mb-3 font-medium uppercase tracking-wide">
-          Live Preview
-        </p>
-
+    <div className="flex flex-col gap-6 h-full">
+      {/* ── Phone frame ─────────────────────────────────────────────── */}
+      <div className="flex flex-col items-center">
         {/* Phone shell */}
-        <div className="w-[260px] rounded-[2rem] border-4 border-foreground/10 bg-neutral-900 shadow-2xl overflow-hidden">
-          {/* Status bar */}
-          <div className="bg-[#075E54] px-4 py-2 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">B</span>
+        <div
+          className="w-[320px] rounded-[2.5rem] shadow-2xl overflow-hidden"
+          style={{
+            border: "6px solid #1a1a2e",
+            boxShadow:
+              "0 30px 80px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
+          }}
+        >
+          {/* Notch bar */}
+          <div className="bg-[#1a1a2e] flex justify-center pt-2 pb-1">
+            <div className="w-20 h-1.5 rounded-full bg-white/20" />
+          </div>
+
+          {/* WA header bar */}
+          <div className="bg-[#075E54] px-4 py-3 flex items-center gap-3">
+            {/* Avatar */}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-300 to-teal-500 flex items-center justify-center shadow-inner shrink-0">
+              <span className="text-white text-sm font-bold">B</span>
             </div>
-            <div>
-              <p className="text-white text-xs font-semibold leading-none">Botify</p>
-              <p className="text-white/60 text-[10px] leading-none mt-0.5">online</p>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-sm font-semibold leading-tight">
+                Botify
+              </p>
+              <p className="text-emerald-200/80 text-[11px] leading-tight">
+                online
+              </p>
+            </div>
+            {/* Signal dots */}
+            <div className="flex gap-1">
+              {[...Array(3)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 h-1 rounded-full bg-white/40"
+                />
+              ))}
             </div>
           </div>
 
           {/* Chat area */}
           <div
-            className="min-h-[320px] p-3 flex flex-col justify-end"
+            className="min-h-[440px] p-4 flex flex-col justify-end gap-2"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect fill='%231a1a2e' width='100' height='100'/%3E%3C/svg%3E")`,
-              backgroundColor: "#1a1a2e",
+              background:
+                "linear-gradient(180deg,#0d1117 0%,#111827 100%)",
             }}
           >
             {!hasContent ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-white/30 text-xs text-center">
-                  Your message preview<br />will appear here
+              <div className="flex-1 flex flex-col items-center justify-center gap-3 py-16">
+                <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center">
+                  <MessageSquare className="h-7 w-7 text-white/20" />
+                </div>
+                <p className="text-white/25 text-xs text-center leading-relaxed">
+                  Your message preview
+                  <br />
+                  will appear here
                 </p>
               </div>
             ) : (
               <div className="w-full">
                 {/* Message bubble */}
-                <div className="bg-[#202c33] rounded-lg rounded-tl-none overflow-hidden shadow-md max-w-[220px]">
+                <div
+                  className="rounded-2xl rounded-tl-none overflow-hidden shadow-xl"
+                  style={{
+                    background: "linear-gradient(135deg,#1f2937 0%,#202c33 100%)",
+                    maxWidth: "100%",
+                  }}
+                >
                   {/* Header */}
                   {payload.header && (
-                    <div className="px-3 pt-2.5 pb-0">
-                      <p className="text-white font-bold text-sm leading-snug">
+                    <div className="px-4 pt-3 pb-1">
+                      <p className="text-white font-bold text-[13px] leading-snug">
                         {payload.header}
                       </p>
                     </div>
@@ -71,8 +112,8 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
 
                   {/* Body */}
                   {payload.body && (
-                    <div className="px-3 py-2">
-                      <p className="text-[#e9edef] text-xs leading-relaxed whitespace-pre-wrap">
+                    <div className="px-4 py-2">
+                      <p className="text-[#e9edef] text-[12px] leading-relaxed whitespace-pre-wrap">
                         {payload.body}
                       </p>
                     </div>
@@ -80,16 +121,18 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
 
                   {/* Footer */}
                   {payload.footer && (
-                    <div className="px-3 pb-2">
-                      <p className="text-[#8696a0] text-[10px] leading-snug">
+                    <div className="px-4 pb-2">
+                      <p className="text-[#8696a0] text-[11px] leading-snug italic">
                         {payload.footer}
                       </p>
                     </div>
                   )}
 
                   {/* Timestamp */}
-                  <div className="px-3 pb-1.5 flex justify-end">
-                    <span className="text-[#8696a0] text-[9px]">12:00 PM</span>
+                  <div className="px-4 pb-2 flex justify-end">
+                    <span className="text-[#8696a0] text-[10px]">
+                      12:00 PM ✓✓
+                    </span>
                   </div>
 
                   {/* Buttons */}
@@ -98,63 +141,74 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
                       {payload.buttons.map((btn, i) => {
                         const isListBtn = btn.type === "single_select";
                         const totalRows = isListBtn
-                          ? (btn.sections ?? []).reduce((acc, s) => acc + s.rows.length, 0)
+                          ? (btn.sections ?? []).reduce(
+                              (acc, s) => acc + s.rows.length,
+                              0
+                            )
                           : 0;
 
                         return (
                           <div key={btn.id}>
-                            {i > 0 && <div className="border-t border-white/10" />}
-                            <div className="flex items-center justify-center gap-1.5 py-2 px-3 hover:bg-white/5 cursor-pointer transition-colors">
-                              <span className="text-[#53bdeb]">
+                            {i > 0 && (
+                              <div className="border-t border-white/10" />
+                            )}
+
+                            {/* Button row */}
+                            <div className="flex items-center gap-2 py-2.5 px-4 hover:bg-white/5 cursor-pointer transition-colors">
+                              <span className="text-[#53bdeb] shrink-0">
                                 {BUTTON_ICONS[btn.type]}
                               </span>
-                              <span className="text-[#53bdeb] text-xs font-medium truncate">
-                                {btn.text || (isListBtn ? "Select Option" : "Button")}
+                              <span className="text-[#53bdeb] text-[12px] font-medium flex-1 truncate">
+                                {btn.text ||
+                                  (isListBtn ? "Select Option" : "Button")}
                               </span>
                               {isListBtn && totalRows > 0 && (
-                                <span className="ml-auto text-[#8696a0] text-[9px] shrink-0">
-                                  {totalRows} option{totalRows !== 1 ? "s" : ""}
+                                <span className="text-[#8696a0] text-[10px] shrink-0 bg-white/5 px-1.5 py-0.5 rounded-full">
+                                  {totalRows}
                                 </span>
                               )}
                             </div>
 
-                            {/* For list buttons: show a small collapsed option preview */}
-                            {isListBtn && (btn.sections ?? []).length > 0 && (
-                              <div className="px-3 pb-2 space-y-1">
-                                {(btn.sections ?? []).map((section, si) => (
-                                  <div key={si}>
-                                    {section.title && (
-                                      <p className="text-[#8696a0] text-[9px] uppercase tracking-wide mb-0.5">
-                                        {section.title}
-                                      </p>
-                                    )}
-                                    {section.rows.slice(0, 2).map((row, ri) => (
-                                      <div
-                                        key={ri}
-                                        className="flex items-center gap-1.5 py-0.5"
-                                      >
-                                        <div className="w-1 h-1 rounded-full bg-[#53bdeb] shrink-0" />
-                                        <div>
-                                          <p className="text-[#e9edef] text-[10px] leading-none">
-                                            {row.title || "Option"}
-                                          </p>
-                                          {row.description && (
-                                            <p className="text-[#8696a0] text-[9px]">
-                                              {row.description}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </div>
-                                    ))}
-                                    {section.rows.length > 2 && (
-                                      <p className="text-[#8696a0] text-[9px]">
-                                        +{section.rows.length - 2} more…
-                                      </p>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            {/* List option preview */}
+                            {isListBtn &&
+                              (btn.sections ?? []).length > 0 && (
+                                <div className="px-4 pb-3 space-y-2 border-t border-white/5 pt-2">
+                                  {(btn.sections ?? []).map((section, si) => (
+                                    <div key={si} className="space-y-1">
+                                      {section.title && (
+                                        <p className="text-[#8696a0] text-[10px] uppercase tracking-widest font-semibold">
+                                          {section.title}
+                                        </p>
+                                      )}
+                                      {section.rows
+                                        .slice(0, 3)
+                                        .map((row, ri) => (
+                                          <div
+                                            key={ri}
+                                            className="flex items-start gap-2 py-1 border-b border-white/5 last:border-0"
+                                          >
+                                            <div className="w-1.5 h-1.5 rounded-full bg-[#53bdeb] mt-1.5 shrink-0" />
+                                            <div className="min-w-0">
+                                              <p className="text-[#e9edef] text-[11px] font-medium leading-tight truncate">
+                                                {row.title || "Option"}
+                                              </p>
+                                              {row.description && (
+                                                <p className="text-[#8696a0] text-[10px] truncate">
+                                                  {row.description}
+                                                </p>
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                      {section.rows.length > 3 && (
+                                        <p className="text-[#8696a0] text-[10px] pl-3.5">
+                                          +{section.rows.length - 3} more options
+                                        </p>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                           </div>
                         );
                       })}
@@ -164,25 +218,34 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
               </div>
             )}
           </div>
+
+          {/* Bottom bar */}
+          <div className="bg-[#1a1a2e] flex justify-center pb-2 pt-1">
+            <div className="w-24 h-1 rounded-full bg-white/20" />
+          </div>
         </div>
       </div>
 
-      {/* JSON toggle */}
-      <div className="border rounded-lg overflow-hidden">
+      {/* ── JSON inspector ───────────────────────────────────────────── */}
+      <div className="rounded-xl border overflow-hidden">
         <button
           type="button"
           onClick={() => setShowJson((v) => !v)}
-          className="w-full flex items-center justify-between px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/40 transition-colors"
+          className="w-full flex items-center gap-2 px-4 py-3 text-xs font-medium text-muted-foreground hover:bg-muted/40 transition-colors"
         >
+          <Code2 className="h-3.5 w-3.5" />
           <span>JSON Payload</span>
-          {showJson ? (
-            <ChevronUp className="h-3.5 w-3.5" />
-          ) : (
-            <ChevronDown className="h-3.5 w-3.5" />
-          )}
+          <span className="ml-auto">
+            {showJson ? (
+              <ChevronUp className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronDown className="h-3.5 w-3.5" />
+            )}
+          </span>
         </button>
+
         {showJson && (
-          <pre className="text-[10px] leading-relaxed bg-muted/40 p-3 overflow-x-auto max-h-48 text-muted-foreground border-t whitespace-pre-wrap break-all">
+          <pre className="text-[11px] leading-relaxed bg-muted/30 px-4 py-3 overflow-x-auto max-h-64 text-muted-foreground border-t whitespace-pre-wrap break-all font-mono">
             {JSON.stringify(payload, null, 2)}
           </pre>
         )}

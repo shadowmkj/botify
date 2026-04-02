@@ -5,10 +5,9 @@ import ButtonPreview from "./ButtonPreview";
 import type {
   ButtonMessagePayload,
   BuilderErrors,
-  ButtonEntry,
 } from "./ButtonMessageTypes";
 
-// ─── State / Reducer ────────────────────────────────────────────────────────
+// ─── State / Reducer ─────────────────────────────────────────────────────────
 
 type State = {
   payload: ButtonMessagePayload;
@@ -30,7 +29,7 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-// ─── Validation ─────────────────────────────────────────────────────────────
+// ─── Validation ───────────────────────────────────────────────────────────────
 
 const URL_RE = /^https?:\/\/.+/;
 const PHONE_RE = /^\+?[0-9\s\-().]{7,20}$/;
@@ -55,7 +54,6 @@ function validate(payload: ButtonMessagePayload): BuilderErrors {
       e.payload = "Must be a valid phone number.";
     }
 
-    // single_select validation
     if (btn.type === "single_select") {
       const sections = btn.sections ?? [];
       if (sections.length === 0) {
@@ -65,13 +63,10 @@ function validate(payload: ButtonMessagePayload): BuilderErrors {
         if (!hasRows) {
           e.payload = "Each section must have at least one option.";
         } else {
-          // Check all rows have id + title
           const badRow = sections
             .flatMap((s) => s.rows)
             .find((r) => !r.id.trim() || !r.title.trim());
-          if (badRow) {
-            e.payload = "All options must have an ID and a label.";
-          }
+          if (badRow) e.payload = "All options must have an ID and a label.";
         }
       }
     }
@@ -87,7 +82,7 @@ function isValid(errors: BuilderErrors): boolean {
   return !errors.body && !errors.buttons;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const DEFAULT_PAYLOAD: ButtonMessagePayload = {
   header: "",
@@ -97,7 +92,6 @@ const DEFAULT_PAYLOAD: ButtonMessagePayload = {
 };
 
 interface ButtonMessageBuilderProps {
-  /** Called (debounced 300ms) whenever payload changes and passes validation */
   onChange: (payload: ButtonMessagePayload | null) => void;
   defaultValue?: ButtonMessagePayload;
 }
@@ -111,7 +105,6 @@ export default function ButtonMessageBuilder({
     errors: {},
   });
 
-  // Debounce onChange so parent doesn't re-render on every keystroke
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const emitChange = useCallback(
@@ -126,36 +119,65 @@ export default function ButtonMessageBuilder({
     [onChange]
   );
 
-  // Validate + emit whenever payload changes
   useEffect(() => {
     emitChange(state.payload);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.payload]);
 
-  // Cleanup timer on unmount
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    []
+  );
 
   const handleChange = (updated: ButtonMessagePayload) => {
     dispatch({ type: "SET_PAYLOAD", payload: updated });
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Left — form */}
-      <div className="bg-card border rounded-xl p-5 shadow-sm">
-        <h3 className="text-sm font-semibold mb-4 text-foreground">
-          Build Message
-        </h3>
-        <ButtonForm
-          payload={state.payload}
-          errors={state.errors}
-          onChange={handleChange}
-        />
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-0 rounded-2xl border shadow-md overflow-hidden">
+      {/* ── Left: form panel ────────────────────────────────────────── */}
+      <div className="flex flex-col min-h-[680px]">
+        {/* Header bar */}
+        <div className="flex items-center gap-3 px-6 py-4 border-b bg-muted/30">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-sm font-semibold tracking-tight">
+              Message Builder
+            </span>
+          </div>
+          {isValid(state.errors) && state.payload.body && (
+            <span className="ml-auto text-[11px] font-medium text-primary bg-primary/10 rounded-full px-2.5 py-0.5">
+              ✓ Ready to send
+            </span>
+          )}
+        </div>
+
+        {/* Scrollable form body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <ButtonForm
+            payload={state.payload}
+            errors={state.errors}
+            onChange={handleChange}
+          />
+        </div>
       </div>
 
-      {/* Right — preview */}
-      <div className="bg-card border rounded-xl p-5 shadow-sm">
-        <ButtonPreview payload={state.payload} />
+      {/* ── Right: preview panel ─────────────────────────────────────── */}
+      <div className="border-l flex flex-col bg-muted/10">
+        {/* Header bar */}
+        <div className="flex items-center gap-2 px-6 py-4 border-b bg-muted/30">
+          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+          <span className="text-sm font-semibold tracking-tight">
+            Live Preview
+          </span>
+        </div>
+
+        {/* Preview content — sticky scroll */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <ButtonPreview payload={state.payload} />
+        </div>
       </div>
     </div>
   );

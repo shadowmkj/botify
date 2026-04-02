@@ -21,9 +21,8 @@ export const createCampaignSchema = z.object({
   isButtonCampaign: z.boolean().default(false),
 }).superRefine((data, ctx) => {
   if (data.isButtonCampaign) {
-    if (!data.buttonPayloadJson) {
-      ctx.addIssue({ code: 'custom', message: 'Button message payload is required for button campaigns.' });
-    }
+    // Button campaigns are validated via the ButtonMessageBuilder UI
+    // and the client-side onSubmit guard; no additional schema checks here.
     return;
   }
   const hasMessage = typeof data.message === 'string' && data.message.trim().length > 0;

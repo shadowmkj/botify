@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EmojiTextarea from "@/components/emoji-textarea";
-import { Plus, Trash2, ChevronDown, ChevronUp, ListTree } from "lucide-react";
+import { Plus, Trash2, ChevronDown, ChevronUp, ListTree, Sparkles, AlignLeft, MousePointer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
@@ -26,33 +26,56 @@ const BUTTON_TYPE_LABELS: Record<ButtonEntry["type"], string> = {
 
 const PAYLOAD_LABEL: Record<ButtonEntry["type"], string> = {
   quick_reply: "Reply ID",
-  cta_url: "URL (https://…)",
+  cta_url: "URL",
   cta_call: "Phone Number",
   cta_copy: "Copy Code",
-  single_select: "", // not used
+  single_select: "",
 };
+
+const PAYLOAD_PLACEHOLDER: Record<ButtonEntry["type"], string> = {
+  quick_reply: "e.g., reply_yes",
+  cta_url: "https://example.com",
+  cta_call: "+919999999999",
+  cta_copy: "PROMO2025",
+  single_select: "",
+};
+
+// ─── Section label with icon ─────────────────────────────────────────────────
+
+function SectionLabel({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2 mb-1.5">
+      <span className="text-muted-foreground">{icon}</span>
+      <Label className="text-sm font-semibold text-foreground cursor-pointer">
+        {children}
+      </Label>
+    </div>
+  );
+}
 
 // ─── SingleSelectEditor ───────────────────────────────────────────────────────
 
 interface SingleSelectEditorProps {
   sections: SelectSection[];
   onUpdate: (sections: SelectSection[]) => void;
+  error?: string;
 }
 
-function SingleSelectEditor({ sections, onUpdate }: SingleSelectEditorProps) {
+function SingleSelectEditor({ sections, onUpdate, error }: SingleSelectEditorProps) {
   const [openSection, setOpenSection] = useState<number>(0);
 
   const addSection = () => {
-    onUpdate([
+    const newSections = [
       ...sections,
       { title: "", rows: [{ id: crypto.randomUUID(), title: "", description: "" }] },
-    ]);
-    setOpenSection(sections.length);
+    ];
+    onUpdate(newSections);
+    setOpenSection(newSections.length - 1);
   };
 
   const removeSection = (si: number) => {
     onUpdate(sections.filter((_, i) => i !== si));
-    setOpenSection(Math.max(0, openSection - 1));
+    setOpenSection(Math.max(0, si - 1));
   };
 
   const updateSectionTitle = (si: number, title: string) => {
@@ -88,147 +111,171 @@ function SingleSelectEditor({ sections, onUpdate }: SingleSelectEditorProps) {
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between mb-1">
-        <Label className="text-xs flex items-center gap-1.5">
-          <ListTree className="h-3.5 w-3.5 text-muted-foreground" />
+    <div className="space-y-3 pt-1">
+      <div className="flex items-center justify-between">
+        <SectionLabel icon={<ListTree className="h-4 w-4" />}>
           Sections &amp; Options
-        </Label>
-        <button
+        </SectionLabel>
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={addSection}
-          className="text-xs text-primary hover:underline flex items-center gap-1"
+          className="h-8 gap-1.5 text-xs"
         >
-          <Plus className="h-3 w-3" /> Add Section
-        </button>
+          <Plus className="h-3.5 w-3.5" />
+          Add Section
+        </Button>
       </div>
 
-      {sections.length === 0 && (
-        <p className="text-muted-foreground text-xs py-2 text-center border border-dashed rounded-md">
-          No sections yet. Add at least one section with options.
+      {error && (
+        <p className="text-destructive text-sm bg-destructive/5 border border-destructive/20 rounded-lg px-3 py-2">
+          {error}
         </p>
       )}
 
-      {sections.map((section, si) => (
-        <div key={si} className="border rounded-md overflow-hidden bg-background">
-          {/* Section header */}
-          <div className="flex items-center gap-2 px-2 py-1.5 bg-muted/50">
+      {sections.length === 0 && !error && (
+        <div className="border-2 border-dashed rounded-xl p-6 text-center">
+          <ListTree className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">
+            No sections yet. Add a section to create list options.
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {sections.map((section, si) => (
+          <div
+            key={si}
+            className="rounded-xl border bg-background overflow-hidden shadow-sm"
+          >
+            {/* Section header */}
             <button
               type="button"
               onClick={() => setOpenSection(openSection === si ? -1 : si)}
-              className="flex-1 flex items-center gap-1.5 text-xs font-medium text-left"
+              className="w-full flex items-center gap-3 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors text-left"
             >
-              {openSection === si ? (
-                <ChevronUp className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              )}
-              <span className="text-muted-foreground">Section {si + 1}</span>
-              {section.title && (
-                <span className="truncate text-foreground">&mdash; {section.title}</span>
-              )}
-              <span className="ml-auto text-muted-foreground font-normal">
+              <span className="text-muted-foreground">
+                {openSection === si ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Section {si + 1}
+                </span>
+                {section.title && (
+                  <span className="ml-2 text-sm text-foreground font-medium">
+                    — {section.title}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground bg-muted rounded-full px-2 py-0.5 shrink-0">
                 {section.rows.length} option{section.rows.length !== 1 ? "s" : ""}
               </span>
+              {sections.length > 1 && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); removeSection(si); }}
+                  className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
             </button>
-            {sections.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeSection(si)}
-                className="text-muted-foreground hover:text-destructive transition-colors"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
+
+            {/* Section body */}
+            {openSection === si && (
+              <div className="p-4 space-y-4">
+                {/* Section title */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-muted-foreground font-medium">
+                    Section Header <span className="font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    placeholder="e.g., Popular choices"
+                    value={section.title ?? ""}
+                    onChange={(e) => updateSectionTitle(si, e.target.value)}
+                    className="h-10"
+                  />
+                </div>
+
+                {/* Rows */}
+                <div className="space-y-3">
+                  {section.rows.map((row, ri) => (
+                    <div
+                      key={row.id}
+                      className="rounded-lg border bg-muted/20 p-3 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">
+                          Option {ri + 1}
+                        </span>
+                        {section.rows.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeRow(si, ri)}
+                            className="p-1 text-muted-foreground hover:text-destructive transition-colors rounded"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* ID */}
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">ID *</Label>
+                          <Input
+                            className="h-9 text-sm font-mono"
+                            placeholder="unique_id"
+                            value={row.id}
+                            onChange={(e) => updateRow(si, ri, { id: e.target.value })}
+                          />
+                        </div>
+                        {/* Label */}
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Label *</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            placeholder="Display label"
+                            value={row.title}
+                            onChange={(e) => updateRow(si, ri, { title: e.target.value })}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Description <span className="font-normal">(optional)</span>
+                        </Label>
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Short description shown below the label"
+                          value={row.description ?? ""}
+                          onChange={(e) => updateRow(si, ri, { description: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => addRow(si)}
+                  className="w-full h-10 flex items-center justify-center gap-2 border-2 border-dashed rounded-lg text-sm text-muted-foreground hover:text-primary hover:border-primary transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Option
+                </button>
+              </div>
             )}
           </div>
-
-          {/* Section body */}
-          {openSection === si && (
-            <div className="p-2 space-y-3">
-              {/* Section title */}
-              <div className="space-y-1">
-                <Label className="text-[11px] text-muted-foreground">
-                  Section Title <span className="font-normal">(optional)</span>
-                </Label>
-                <Input
-                  className="h-7 text-xs"
-                  placeholder="e.g., Popular choices"
-                  value={section.title ?? ""}
-                  onChange={(e) => updateSectionTitle(si, e.target.value)}
-                />
-              </div>
-
-              {/* Rows */}
-              <div className="space-y-2">
-                {section.rows.map((row, ri) => (
-                  <div
-                    key={row.id}
-                    className="grid gap-1.5 p-2 bg-muted/30 rounded border border-border/60 relative"
-                  >
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
-                        Option {ri + 1}
-                      </span>
-                      {section.rows.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeRow(si, ri)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Row ID */}
-                    <div className="space-y-0.5">
-                      <Label className="text-[10px] text-muted-foreground">ID</Label>
-                      <Input
-                        className="h-6 text-xs font-mono"
-                        placeholder="unique_id"
-                        value={row.id}
-                        onChange={(e) => updateRow(si, ri, { id: e.target.value })}
-                      />
-                    </div>
-
-                    {/* Row title */}
-                    <div className="space-y-0.5">
-                      <Label className="text-[10px] text-muted-foreground">Label *</Label>
-                      <Input
-                        className="h-6 text-xs"
-                        placeholder="Option label"
-                        value={row.title}
-                        onChange={(e) => updateRow(si, ri, { title: e.target.value })}
-                      />
-                    </div>
-
-                    {/* Row description */}
-                    <div className="space-y-0.5">
-                      <Label className="text-[10px] text-muted-foreground">
-                        Description <span className="font-normal">(optional)</span>
-                      </Label>
-                      <Input
-                        className="h-6 text-xs"
-                        placeholder="Short description"
-                        value={row.description ?? ""}
-                        onChange={(e) => updateRow(si, ri, { description: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => addRow(si)}
-                className="w-full text-xs text-primary hover:underline flex items-center justify-center gap-1 py-1 border border-dashed rounded"
-              >
-                <Plus className="h-3 w-3" /> Add Option
-              </button>
-            </div>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
@@ -270,7 +317,6 @@ export default function ButtonForm({ payload, errors, onChange }: ButtonFormProp
 
   const handleTypeChange = (id: string, newType: ButtonEntry["type"]) => {
     const base: Partial<ButtonEntry> = { type: newType, payload: "" };
-    // Seed a default section when switching to single_select
     if (newType === "single_select") {
       base.sections = [
         {
@@ -285,72 +331,97 @@ export default function ButtonForm({ payload, errors, onChange }: ButtonFormProp
   };
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="space-y-1.5">
-        <Label htmlFor="bm-header">
-          Header <span className="text-muted-foreground text-xs">(optional)</span>
-        </Label>
-        <Input
-          id="bm-header"
-          placeholder="e.g., Welcome to Botify!"
-          value={payload.header}
-          onChange={(e) => updateField("header", e.target.value)}
-        />
-      </div>
+    <div className="space-y-7">
 
-      {/* Body */}
-      <div className="space-y-1.5">
-        <Label htmlFor="bm-body">
-          Body <span className="text-destructive">*</span>
-        </Label>
-        <EmojiTextarea
-          placeholder="Enter your message body…"
-          value={payload.body}
-          onChange={(v) => updateField("body", v)}
-        />
-        {errors.body && <p className="text-destructive text-sm">{errors.body}</p>}
-      </div>
+      {/* ── Message content ────────────────────────────────────────── */}
+      <div className="space-y-5">
+        <SectionLabel icon={<AlignLeft className="h-4 w-4" />}>
+          Message Content
+        </SectionLabel>
 
-      {/* Footer */}
-      <div className="space-y-1.5">
-        <Label htmlFor="bm-footer">
-          Footer <span className="text-muted-foreground text-xs">(optional)</span>
-        </Label>
-        <Input
-          id="bm-footer"
-          placeholder="e.g., Reply STOP to unsubscribe"
-          value={payload.footer}
-          onChange={(e) => updateField("footer", e.target.value)}
-        />
-      </div>
-
-      {/* Buttons section */}
-      <div className="border-t pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <Label className="text-sm font-semibold">
-            Buttons{" "}
-            <span className="text-muted-foreground font-normal">
-              ({payload.buttons.length}/3)
-            </span>
+        {/* Header */}
+        <div className="space-y-1.5">
+          <Label htmlFor="bm-header" className="text-sm flex items-center gap-2">
+            Header
+            <span className="text-xs font-normal text-muted-foreground">(optional)</span>
           </Label>
+          <Input
+            id="bm-header"
+            placeholder="e.g., Welcome to Botify!"
+            value={payload.header}
+            onChange={(e) => updateField("header", e.target.value)}
+            className="h-11"
+          />
+        </div>
+
+        {/* Body */}
+        <div className="space-y-1.5">
+          <Label htmlFor="bm-body" className="text-sm flex items-center gap-2">
+            Body
+            <span className="text-xs font-normal text-destructive">required</span>
+          </Label>
+          <EmojiTextarea
+            placeholder="Write your message here…"
+            value={payload.body}
+            onChange={(v) => updateField("body", v)}
+          />
+          {errors.body && (
+            <p className="text-destructive text-sm flex items-center gap-1.5 mt-1">
+              <span className="w-1 h-1 rounded-full bg-destructive inline-block" />
+              {errors.body}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="space-y-1.5">
+          <Label htmlFor="bm-footer" className="text-sm flex items-center gap-2">
+            Footer
+            <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+          </Label>
+          <Input
+            id="bm-footer"
+            placeholder="e.g., Reply STOP to unsubscribe"
+            value={payload.footer}
+            onChange={(e) => updateField("footer", e.target.value)}
+            className="h-11"
+          />
+        </div>
+      </div>
+
+      {/* ── Divider ────────────────────────────────────────────────── */}
+      <div className="border-t" />
+
+      {/* ── Buttons ────────────────────────────────────────────────── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <SectionLabel icon={<MousePointer className="h-4 w-4" />}>
+            Buttons
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              ({payload.buttons.length} / 3)
+            </span>
+          </SectionLabel>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={addButton}
             disabled={payload.buttons.length >= 3}
-            className="gap-1.5"
+            className="h-9 gap-1.5"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             Add Button
           </Button>
         </div>
 
         {payload.buttons.length === 0 && (
-          <p className="text-muted-foreground text-sm text-center py-4 border border-dashed rounded-lg">
-            No buttons yet. Add up to 3 buttons.
-          </p>
+          <div className="border-2 border-dashed rounded-xl p-8 text-center">
+            <Sparkles className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
+            <p className="text-sm font-medium text-muted-foreground mb-1">No buttons yet</p>
+            <p className="text-xs text-muted-foreground/70">
+              Add up to 3 interactive buttons to your message
+            </p>
+          </div>
         )}
 
         <div className="space-y-4">
@@ -362,95 +433,101 @@ export default function ButtonForm({ payload, errors, onChange }: ButtonFormProp
               <div
                 key={btn.id}
                 className={cn(
-                  "rounded-lg border p-3 space-y-3 bg-muted/30 relative",
-                  btnErrors && "border-destructive/50"
+                  "rounded-xl border bg-card shadow-sm overflow-hidden",
+                  btnErrors && "border-destructive/40 ring-1 ring-destructive/20"
                 )}
               >
                 {/* Card header */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    Button {index + 1}
-                  </span>
+                <div className="flex items-center justify-between px-4 py-3 bg-muted/30 border-b">
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 rounded-full bg-primary/15 flex items-center justify-center">
+                      <span className="text-primary text-[10px] font-bold">{index + 1}</span>
+                    </div>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      {BUTTON_TYPE_LABELS[btn.type]}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => removeButton(btn.id)}
-                    className="text-muted-foreground hover:text-destructive transition-colors"
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                     aria-label="Remove button"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
 
-                {/* Type selector */}
-                <div className="space-y-1">
-                  <Label className="text-xs">Type</Label>
-                  <Select
-                    value={btn.type}
-                    onValueChange={(v) => handleTypeChange(btn.id, v as ButtonEntry["type"])}
-                  >
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(Object.keys(BUTTON_TYPE_LABELS) as ButtonEntry["type"][]).map((t) => (
-                        <SelectItem key={t} value={t} className="text-sm">
-                          {BUTTON_TYPE_LABELS[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Card body */}
+                <div className="p-4 space-y-4">
+                  {/* Type */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground font-medium">Type</Label>
+                    <Select
+                      value={btn.type}
+                      onValueChange={(v) => handleTypeChange(btn.id, v as ButtonEntry["type"])}
+                    >
+                      <SelectTrigger className="h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {(Object.keys(BUTTON_TYPE_LABELS) as ButtonEntry["type"][]).map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {BUTTON_TYPE_LABELS[t]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                {/* Button label (always shown — maps to title for single_select) */}
-                <div className="space-y-1">
-                  <Label className="text-xs">
-                    {isListType ? "List Button Label" : "Button Label"}
-                  </Label>
-                  <Input
-                    className="h-8 text-sm"
-                    placeholder={isListType ? "e.g., Choose an option" : "e.g., Learn More"}
-                    value={btn.text}
-                    onChange={(e) => updateButton(btn.id, { text: e.target.value })}
-                  />
-                  {btnErrors?.text && (
-                    <p className="text-destructive text-xs">{btnErrors.text}</p>
-                  )}
-                </div>
-
-                {/* Payload — only for non-list types */}
-                {!isListType && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">{PAYLOAD_LABEL[btn.type]}</Label>
+                  {/* Button label */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground font-medium">
+                      {isListType ? "List Button Label" : "Button Label"}
+                    </Label>
                     <Input
-                      className="h-8 text-sm"
-                      placeholder={
-                        btn.type === "cta_url"
-                          ? "https://example.com"
-                          : btn.type === "cta_call"
-                          ? "+919999999999"
-                          : ""
-                      }
-                      value={btn.payload}
-                      onChange={(e) => updateButton(btn.id, { payload: e.target.value })}
+                      className="h-10"
+                      placeholder={isListType ? "e.g., Choose an option" : "e.g., Learn More"}
+                      value={btn.text}
+                      onChange={(e) => updateButton(btn.id, { text: e.target.value })}
                     />
-                    {btnErrors?.payload && (
-                      <p className="text-destructive text-xs">{btnErrors.payload}</p>
+                    {btnErrors?.text && (
+                      <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-destructive inline-block" />
+                        {btnErrors.text}
+                      </p>
                     )}
                   </div>
-                )}
 
-                {/* Single-select: sections editor */}
-                {isListType && (
-                  <div className="border-t pt-3">
+                  {/* Payload field — not for single_select */}
+                  {!isListType && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs text-muted-foreground font-medium">
+                        {PAYLOAD_LABEL[btn.type]}
+                      </Label>
+                      <Input
+                        className="h-10"
+                        placeholder={PAYLOAD_PLACEHOLDER[btn.type]}
+                        value={btn.payload}
+                        onChange={(e) => updateButton(btn.id, { payload: e.target.value })}
+                      />
+                      {btnErrors?.payload && (
+                        <p className="text-destructive text-xs mt-1 flex items-center gap-1">
+                          <span className="w-1 h-1 rounded-full bg-destructive inline-block" />
+                          {btnErrors.payload}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Section editor for single_select */}
+                  {isListType && (
                     <SingleSelectEditor
                       sections={btn.sections ?? []}
                       onUpdate={(sections) => updateButton(btn.id, { sections })}
+                      error={btnErrors?.payload}
                     />
-                    {btnErrors?.payload && (
-                      <p className="text-destructive text-xs mt-1">{btnErrors.payload}</p>
-                    )}
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
