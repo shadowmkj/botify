@@ -59,7 +59,7 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
       userId: session?.user?.id!,
       campaignType: campaignType,
       message: values.isButtonCampaign ? null : (values.message || null),
-      media: values.isButtonCampaign ? null : (values.media || null),
+      media: values.media || null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       buttonPayload: buttonPayload as any ?? undefined,
     }

@@ -74,32 +74,6 @@ export default function CampaignForm({
   };
 
   async function onSubmit(values: z.infer<typeof createCampaignSchema>) {
-    // Button campaign path
-    if (mode === "button") {
-      const bp = buttonPayloadRef.current;
-      if (!bp) return toast.error("Please complete the button message builder (body is required).");
-
-      try {
-        await createCampaign({
-          ...values,
-          isButtonCampaign: true,
-          buttonPayloadJson: JSON.stringify(bp),
-          message: bp.body,
-        });
-        toast.success("Button Campaign Created!");
-        form.reset();
-        buttonPayloadRef.current = null;
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Error creating campaign");
-      }
-      return;
-    }
-
-    // Text campaign path (existing logic)
-    if (!file && !values.message) {
-      return toast.error("Message or media is required");
-    }
-
     let media: string | undefined = undefined;
     if (file) {
       try {
@@ -117,6 +91,34 @@ export default function CampaignForm({
         toast.error("Error uploading file.");
         return;
       }
+    }
+
+    // Button campaign path
+    if (mode === "button") {
+      const bp = buttonPayloadRef.current;
+      if (!bp) return toast.error("Please complete the button message builder (body is required).");
+
+      try {
+        await createCampaign({
+          ...values,
+          isButtonCampaign: true,
+          buttonPayloadJson: JSON.stringify(bp),
+          message: bp.body,
+          media,
+        });
+        toast.success("Button Campaign Created!");
+        form.reset();
+        buttonPayloadRef.current = null;
+        setFile(null);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error creating campaign");
+      }
+      return;
+    }
+
+    // Text campaign path (existing logic)
+    if (!file && !values.message) {
+      return toast.error("Message or media is required");
     }
 
     try {
@@ -254,18 +256,6 @@ export default function CampaignForm({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  name="media"
-                  render={({}) => (
-                    <FormItem>
-                      <FormLabel>Media</FormLabel>
-                      <FormControl>
-                        <MediaUpload onFileSelect={handleFileSelect} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </>
             )}
 
@@ -273,8 +263,23 @@ export default function CampaignForm({
             {mode === "button" && (
               <ButtonMessageBuilder
                 onChange={(p) => { buttonPayloadRef.current = p; }}
+                mediaPreviewUrl={file ? URL.createObjectURL(file) : null}
               />
             )}
+
+            {/* ── Media Upload (Shared) ────────────────────────────── */}
+            <FormField
+              name="media"
+              render={() => (
+                <FormItem className={mode === "button" ? "mt-4" : ""}>
+                  <FormLabel>Media (Optional)</FormLabel>
+                  <FormControl>
+                    <MediaUpload onFileSelect={handleFileSelect} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
 
           <CardFooter className="flex justify-end">

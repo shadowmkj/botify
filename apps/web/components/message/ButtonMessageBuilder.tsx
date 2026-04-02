@@ -94,11 +94,13 @@ const DEFAULT_PAYLOAD: ButtonMessagePayload = {
 interface ButtonMessageBuilderProps {
   onChange: (payload: ButtonMessagePayload | null) => void;
   defaultValue?: ButtonMessagePayload;
+  mediaPreviewUrl?: string | null;
 }
 
 export default function ButtonMessageBuilder({
   onChange,
   defaultValue,
+  mediaPreviewUrl,
 }: ButtonMessageBuilderProps) {
   const [state, dispatch] = useReducer(reducer, {
     payload: defaultValue ?? DEFAULT_PAYLOAD,
@@ -176,7 +178,7 @@ export default function ButtonMessageBuilder({
 
         {/* Preview content — sticky scroll */}
         <div className="flex-1 overflow-y-auto p-6">
-          <ButtonPreview payload={state.payload} />
+          <ButtonPreview payload={state.payload} mediaPreviewUrl={mediaPreviewUrl} />
         </div>
       </div>
     </div>

@@ -8,10 +8,52 @@ import { prisma } from '@repo/db';
 import { phoneNumberSchema, type WhatsappJob } from '@repo/types';
 import NodeCache from 'node-cache';
 import dotenv from 'dotenv';
-import { WASocket } from 'baileys';
+import { WASocket, generateWAMessageContent } from 'baileys';
 const { sendButtons, sendInteractiveMessage } = require('baileys_helper');
 
 dotenv.config();
+
+const inferFromUrl = (
+    url: string,
+): {
+    kind: 'image' | 'video' | 'document';
+    mime?: string;
+    name?: string;
+} => {
+    try {
+        const u = new URL(url);
+        const pathname = u.pathname.toLowerCase();
+        const name = decodeURIComponent(pathname.split('/').pop() || 'file');
+        const ext = name.split('.').pop();
+        const map: Record<
+            string,
+            { kind: 'image' | 'video' | 'document'; mime: string }
+        > = {
+            jpg: { kind: 'image', mime: 'image/jpeg' },
+            jpeg: { kind: 'image', mime: 'image/jpeg' },
+            png: { kind: 'image', mime: 'image/png' },
+            webp: { kind: 'image', mime: 'image/webp' },
+            gif: { kind: 'image', mime: 'image/gif' },
+            mp4: { kind: 'video', mime: 'video/mp4' },
+            mov: { kind: 'video', mime: 'video/quicktime' },
+            pdf: { kind: 'document', mime: 'application/pdf' },
+            docx: {
+                kind: 'document',
+                mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            },
+            doc: { kind: 'document', mime: 'application/msword' },
+            xlsx: {
+                kind: 'document',
+                mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            },
+            csv: { kind: 'document', mime: 'text/csv' },
+        };
+        if (ext && map[ext]) return { ...map[ext], name };
+        return { kind: 'document', name };
+    } catch {
+        return { kind: 'document' };
+    }
+};
 
 export const sessions: Map<string, WASocket> = new Map();
 export const msgRetryCounterCache = new NodeCache();
@@ -36,7 +78,11 @@ new Worker<WhatsappJob>(
                     title,
                     text,
                     footer,
-                    buttons
+                    buttons,
+                    media,
+                    mediaType,
+                    fileName,
+                    mimeType,
                 } = job.data;
                 const { success, data: validatedSender } =
                     phoneNumberSchema.safeParse(sender);
@@ -52,23 +98,54 @@ new Worker<WhatsappJob>(
                         );
                         console.log(JSON.stringify(buttons))
                         const result = await sock.onWhatsApp(receiver);
-                        let response;
-                        // const res = await sendButtons(sock, result ? result[0].jid : '', {
-                        //     title,
-                        //     text,
-                        //     footer,
-                        //     buttons
-                        // });
+                        let mediaMsg: any = undefined;
+
+                        if (media && !media.startsWith('data:')) {
+                            const inferred = mediaType
+                                ? {
+                                      kind: mediaType as 'image' | 'video' | 'document',
+                                      mime: mimeType,
+                                      name: fileName,
+                                  }
+                                : inferFromUrl(media);
+
+                            const messageObject: any = {};
+                            if (inferred.kind === 'image') {
+                                messageObject.image = { url: media };
+                            } else if (inferred.kind === 'video') {
+                                messageObject.video = { url: media };
+                            } else {
+                                messageObject.document = { url: media };
+                                if (inferred.mime) messageObject.mimetype = inferred.mime;
+                                messageObject.fileName = fileName || inferred.name || `${Date.now()}`;
+                            }
+
+                            // Generate the media portion of the WAMessage using WhiskeySockets
+                            mediaMsg = await generateWAMessageContent(messageObject, { upload: sock.waUploadToServer });
+                        }
+
+                        const content: any = {
+                            interactiveMessage: {
+                                body: { text },
+                                footer: footer ? { text: footer } : undefined,
+                                nativeFlowMessage: {
+                                    buttons
+                                }
+                            }
+                        };
+
+                        if (title || mediaMsg) {
+                            content.interactiveMessage.header = {
+                                title: title || undefined,
+                                hasMediaAttachment: !!mediaMsg,
+                                ...(mediaMsg || {}) // Injects imageMessage, documentMessage, etc.
+                            };
+                        }
+
                         const resp = await sendInteractiveMessage(sock, result ? result[0].jid : '', {
-                            text,
-                            footer,
-                            interactiveButtons: buttons
+                            interactiveMessage: content.interactiveMessage
                         });
-                        logger.error(resp)
-                        // console.log(res)
-                        // response = await sock.sendMessage(result ? result[0].jid : '', {
-                        //     text: "Hello",
-                        // });
+                        logger.info(`Interactive message sent with resp: ${resp?.key?.id}`);
                     }
                     catch (error) {
                         console.log(error)
@@ -131,49 +208,6 @@ new Worker<WhatsappJob>(
                                 );
                             } else {
                                 // Treat media as URL (preferred flow)
-                                const inferFromUrl = (
-                                    url: string,
-                                ): {
-                                    kind: 'image' | 'video' | 'document';
-                                    mime?: string;
-                                    name?: string;
-                                } => {
-                                    try {
-                                        const u = new URL(url);
-                                        const pathname = u.pathname.toLowerCase();
-                                        const name =
-                                            decodeURIComponent(pathname.split('/').pop() || 'file');
-                                        const ext = name.split('.').pop();
-                                        const map: Record<
-                                            string,
-                                            { kind: 'image' | 'video' | 'document'; mime: string }
-                                        > = {
-                                            jpg: { kind: 'image', mime: 'image/jpeg' },
-                                            jpeg: { kind: 'image', mime: 'image/jpeg' },
-                                            png: { kind: 'image', mime: 'image/png' },
-                                            webp: { kind: 'image', mime: 'image/webp' },
-                                            gif: { kind: 'image', mime: 'image/gif' },
-                                            mp4: { kind: 'video', mime: 'video/mp4' },
-                                            mov: { kind: 'video', mime: 'video/quicktime' },
-                                            pdf: { kind: 'document', mime: 'application/pdf' },
-                                            docx: {
-                                                kind: 'document',
-                                                mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                                            },
-                                            doc: { kind: 'document', mime: 'application/msword' },
-                                            xlsx: {
-                                                kind: 'document',
-                                                mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                                            },
-                                            csv: { kind: 'document', mime: 'text/csv' },
-                                        };
-                                        if (ext && map[ext]) return { ...map[ext], name };
-                                        return { kind: 'document', name };
-                                    } catch {
-                                        return { kind: 'document' };
-                                    }
-                                };
-
                                 const inferred = mediaType
                                     ? {
                                         kind: mediaType as 'image' | 'video' | 'document',

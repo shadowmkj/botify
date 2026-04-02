@@ -71,16 +71,24 @@ export const sendMessage = async (data: Props) => {
 const sendButtonZSchema = z.object({
   receiver: phoneNumberSchema,
   sender: phoneNumberSchema,
+  media: z.string().optional(),
+  mediaType: z.enum(['image', 'video', 'document', 'text']).optional(),
+  fileName: z.string().optional(),
+  mimeType: z.string().optional(),
 })
 
 interface SendButtonProps {
   receiver: string
   sender: string
   buttonPayload: ButtonMessagePayload
+  media?: string
+  mediaType?: 'image' | 'video' | 'document' | 'text'
+  fileName?: string
+  mimeType?: string
 }
 
-export const sendButtonMessage = async ({ receiver, sender, buttonPayload }: SendButtonProps) => {
-  const validated = sendButtonZSchema.safeParse({ receiver, sender })
+export const sendButtonMessage = async ({ receiver, sender, buttonPayload, media, mediaType, fileName, mimeType }: SendButtonProps) => {
+  const validated = sendButtonZSchema.safeParse({ receiver, sender, media, mediaType, fileName, mimeType })
   if (!validated.success) {
     throw new Error("Invalid data: " + JSON.stringify(validated.error))
   }
@@ -110,7 +118,9 @@ export const sendButtonMessage = async ({ receiver, sender, buttonPayload }: Sen
       text,
       title,
       footer ?? "",
-      buttons
+      buttons,
+      media,
+      media ? { mediaType, fileName, mimeType } : undefined
     )
   } catch (error: any) {
     if (error?.code === "QUOTA_EXCEEDED") {

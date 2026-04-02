@@ -84,22 +84,7 @@ const SendMessagePage = () => {
         console.log(mode, data)
         if (!currentDevice) return toast.error("No device selected");
 
-        if (mode === "button") {
-            const bp = buttonPayloadRef.current;
-            if (!bp) return toast.error("Please complete the button message builder (body is required).");
-            sendButton({
-                receiver: data.number,
-                sender: currentDevice,
-                buttonPayload: bp,
-            });
-            return;
-        }
-
-        // Text mode
-        if (!file && !data.message) {
-            return toast.error("Message or media is required");
-        }
-
+        // ── Upload phase (common to both modes if a file exists) ──
         let media: string | undefined = undefined;
         let fileName: string | undefined = undefined;
         let mimeType: string | undefined = undefined;
@@ -128,6 +113,30 @@ const SendMessagePage = () => {
                 return;
             }
         }
+
+        if (mode === "button") {
+            const bp = buttonPayloadRef.current;
+            if (!bp) return toast.error("Please complete the button message builder (body is required).");
+            sendButton({
+                receiver: data.number,
+                sender: currentDevice,
+                buttonPayload: bp,
+                media, // passing media parameters
+                mediaType,
+                fileName,
+                mimeType,
+            });
+            return;
+        }
+
+        // Text mode
+        if (!file && !data.message) {
+            return toast.error("Message or media is required");
+        }
+
+
+
+
 
         sendText({
             message: data.message,
@@ -204,18 +213,6 @@ const SendMessagePage = () => {
                                                 </FormItem>
                                             )}
                                         />
-                                        <FormField
-                                            name="media"
-                                            render={({ }) => (
-                                                <FormItem>
-                                                    <FormLabel>Media</FormLabel>
-                                                    <FormControl>
-                                                        <MediaUpload onFileSelect={(f) => setFile(f)} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </>
                                 )}
 
@@ -223,8 +220,23 @@ const SendMessagePage = () => {
                                 {mode === "button" && (
                                     <ButtonMessageBuilder
                                         onChange={(p) => { buttonPayloadRef.current = p; }}
+                                        mediaPreviewUrl={file ? URL.createObjectURL(file) : null}
                                     />
                                 )}
+
+                                {/* ── Media Upload (Shared) ────────────────────────────── */}
+                                <FormField
+                                    name="media"
+                                    render={() => (
+                                        <FormItem className={mode === "button" ? "mt-4" : ""}>
+                                            <FormLabel>Media (Optional)</FormLabel>
+                                            <FormControl>
+                                                <MediaUpload onFileSelect={(f) => setFile(f)} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             </div>
                         </form>
                     </Form>

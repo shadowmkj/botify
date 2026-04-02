@@ -138,6 +138,10 @@ interface SendButtonJob {
     text: string;
     footer?: string;
     buttons: NativeButton[]
+    media?: string;
+    mediaType?: 'image' | 'video' | 'document' | 'text';
+    fileName?: string;
+    mimeType?: string;
 }
 
 interface CampaignJob {

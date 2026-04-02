@@ -14,6 +14,7 @@ import {
 
 interface ButtonPreviewProps {
   payload: ButtonMessagePayload;
+  mediaPreviewUrl?: string | null;
 }
 
 const BUTTON_ICONS: Record<string, React.ReactNode> = {
@@ -24,10 +25,10 @@ const BUTTON_ICONS: Record<string, React.ReactNode> = {
   single_select: <List className="h-4 w-4" />,
 };
 
-export default function ButtonPreview({ payload }: ButtonPreviewProps) {
+export default function ButtonPreview({ payload, mediaPreviewUrl }: ButtonPreviewProps) {
   const [showJson, setShowJson] = useState(false);
 
-  const hasContent = payload.header || payload.body || payload.buttons.length > 0;
+  const hasContent = payload.header || payload.body || payload.buttons.length > 0 || mediaPreviewUrl;
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -101,6 +102,18 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
                     maxWidth: "100%",
                   }}
                 >
+                  {/* Media attachment header */}
+                  {mediaPreviewUrl && (
+                    <div className="p-1">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={mediaPreviewUrl}
+                        alt="Media header preview"
+                        className="w-full h-auto max-h-[160px] object-cover rounded-xl"
+                      />
+                    </div>
+                  )}
+
                   {/* Header */}
                   {payload.header && (
                     <div className="px-4 pt-3 pb-1">

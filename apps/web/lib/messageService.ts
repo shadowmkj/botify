@@ -66,8 +66,13 @@ export class MessageService {
         return { ok: true as const, left, limit }
     }
 
-    async queueButtonMessage(receiver: string,
-        message: string, text: string, title: string, footer: string, buttons: NativeButton[]) {
+    async queueButtonMessage(
+        receiver: string,
+        message: string, text: string, title: string, footer: string,
+        buttons: NativeButton[],
+        media?: string,
+        opts?: { mediaType?: 'image' | 'video' | 'text' | 'document'; fileName?: string; mimeType?: string }
+    ) {
         return this.queue.add(
             "send-button",
             {
@@ -77,7 +82,11 @@ export class MessageService {
                 title,
                 text,
                 footer,
-                buttons
+                buttons,
+                media,
+                mediaType: opts?.mediaType,
+                fileName: opts?.fileName,
+                mimeType: opts?.mimeType,
             },
             { attempts: 3, removeOnComplete: true, removeOnFail: true }
         )
@@ -189,6 +198,7 @@ export class MessageService {
                     text,
                     footer: footer ?? "",
                     buttons,
+                    media: campaign.media ?? undefined,
                 },
                 opts: { attempts: 3, removeOnComplete: true, removeOnFail: true },
             }))
