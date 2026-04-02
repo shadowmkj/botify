@@ -43,13 +43,16 @@ export function entryToRawButton(btn: ButtonEntry): RawButton {
       return {
         name: "single_select",
         buttonParamsJson: {
-          title: btn.payload || btn.text,
-          sections: btn.sections ?? [
-            {
-              title: "Options",
-              rows: [{ id: "option_1", title: "Option 1" }],
-            },
-          ],
+          // title is the list button label shown in the chat bubble
+          title: btn.text,
+          sections: (btn.sections ?? []).map((s) => ({
+            title: s.title,
+            rows: s.rows.map((r) => ({
+              id: r.id,
+              title: r.title,
+              description: r.description,
+            })),
+          })),
         },
       };
   }

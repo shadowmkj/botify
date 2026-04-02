@@ -45,13 +45,37 @@ function validate(payload: ButtonMessagePayload): BuilderErrors {
   const btnErrors: BuilderErrors["buttons"] = {};
   payload.buttons.forEach((btn) => {
     const e: { text?: string; payload?: string } = {};
+
     if (!btn.text.trim()) e.text = "Button label is required.";
+
     if (btn.type === "cta_url" && btn.payload && !URL_RE.test(btn.payload)) {
       e.payload = "Must be a valid URL (https://…)";
     }
     if (btn.type === "cta_call" && btn.payload && !PHONE_RE.test(btn.payload)) {
       e.payload = "Must be a valid phone number.";
     }
+
+    // single_select validation
+    if (btn.type === "single_select") {
+      const sections = btn.sections ?? [];
+      if (sections.length === 0) {
+        e.payload = "Add at least one section with options.";
+      } else {
+        const hasRows = sections.some((s) => s.rows.length > 0);
+        if (!hasRows) {
+          e.payload = "Each section must have at least one option.";
+        } else {
+          // Check all rows have id + title
+          const badRow = sections
+            .flatMap((s) => s.rows)
+            .find((r) => !r.id.trim() || !r.title.trim());
+          if (badRow) {
+            e.payload = "All options must have an ID and a label.";
+          }
+        }
+      }
+    }
+
     if (Object.keys(e).length) btnErrors![btn.id] = e;
   });
   if (Object.keys(btnErrors).length) errors.buttons = btnErrors;

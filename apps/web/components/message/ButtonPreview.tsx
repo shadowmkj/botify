@@ -95,19 +95,69 @@ export default function ButtonPreview({ payload }: ButtonPreviewProps) {
                   {/* Buttons */}
                   {payload.buttons.length > 0 && (
                     <div className="border-t border-white/10">
-                      {payload.buttons.map((btn, i) => (
-                        <div key={btn.id}>
-                          {i > 0 && <div className="border-t border-white/10" />}
-                          <div className="flex items-center justify-center gap-1.5 py-2 px-3 hover:bg-white/5 cursor-pointer transition-colors">
-                            <span className="text-[#53bdeb]">
-                              {BUTTON_ICONS[btn.type]}
-                            </span>
-                            <span className="text-[#53bdeb] text-xs font-medium truncate">
-                              {btn.text || "Button"}
-                            </span>
+                      {payload.buttons.map((btn, i) => {
+                        const isListBtn = btn.type === "single_select";
+                        const totalRows = isListBtn
+                          ? (btn.sections ?? []).reduce((acc, s) => acc + s.rows.length, 0)
+                          : 0;
+
+                        return (
+                          <div key={btn.id}>
+                            {i > 0 && <div className="border-t border-white/10" />}
+                            <div className="flex items-center justify-center gap-1.5 py-2 px-3 hover:bg-white/5 cursor-pointer transition-colors">
+                              <span className="text-[#53bdeb]">
+                                {BUTTON_ICONS[btn.type]}
+                              </span>
+                              <span className="text-[#53bdeb] text-xs font-medium truncate">
+                                {btn.text || (isListBtn ? "Select Option" : "Button")}
+                              </span>
+                              {isListBtn && totalRows > 0 && (
+                                <span className="ml-auto text-[#8696a0] text-[9px] shrink-0">
+                                  {totalRows} option{totalRows !== 1 ? "s" : ""}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* For list buttons: show a small collapsed option preview */}
+                            {isListBtn && (btn.sections ?? []).length > 0 && (
+                              <div className="px-3 pb-2 space-y-1">
+                                {(btn.sections ?? []).map((section, si) => (
+                                  <div key={si}>
+                                    {section.title && (
+                                      <p className="text-[#8696a0] text-[9px] uppercase tracking-wide mb-0.5">
+                                        {section.title}
+                                      </p>
+                                    )}
+                                    {section.rows.slice(0, 2).map((row, ri) => (
+                                      <div
+                                        key={ri}
+                                        className="flex items-center gap-1.5 py-0.5"
+                                      >
+                                        <div className="w-1 h-1 rounded-full bg-[#53bdeb] shrink-0" />
+                                        <div>
+                                          <p className="text-[#e9edef] text-[10px] leading-none">
+                                            {row.title || "Option"}
+                                          </p>
+                                          {row.description && (
+                                            <p className="text-[#8696a0] text-[9px]">
+                                              {row.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {section.rows.length > 2 && (
+                                      <p className="text-[#8696a0] text-[9px]">
+                                        +{section.rows.length - 2} more…
+                                      </p>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
