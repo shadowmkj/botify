@@ -3,6 +3,8 @@ import { createCampaign } from "@/actions/campaign";
 import { getConnectedDevices } from "@/actions/device";
 import MediaUpload from "@/components/media-upload";
 import EmojiTextarea from "@/components/emoji-textarea";
+import ButtonMessageBuilder from "@/components/message/ButtonMessageBuilder";
+import type { ButtonMessagePayload } from "@/components/message/ButtonMessageTypes";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,14 +30,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ContactGroup } from "@repo/db";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
 import { createCampaignSchema } from "./campaignSchema";
+import { MessageSquare, LayoutTemplate } from "lucide-react";
+
+type CampaignMode = "text" | "button";
 
 export default function CampaignForm({
   contactGroups,
@@ -47,6 +53,9 @@ export default function CampaignForm({
     queryFn: getConnectedDevices,
   });
   const [file, setFile] = useState<File | null>(null);
+  const [mode, setMode] = useState<CampaignMode>("text");
+  const buttonPayloadRef = useRef<ButtonMessagePayload | null>(null);
+
   const form = useForm({
     resolver: zodResolver(createCampaignSchema),
     defaultValues: {
@@ -55,6 +64,8 @@ export default function CampaignForm({
       contactGroupId: "",
       sender: "",
       media: undefined,
+      buttonPayloadJson: undefined,
+      isButtonCampaign: false,
     },
   });
 
@@ -63,6 +74,28 @@ export default function CampaignForm({
   };
 
   async function onSubmit(values: z.infer<typeof createCampaignSchema>) {
+    // Button campaign path
+    if (mode === "button") {
+      const bp = buttonPayloadRef.current;
+      if (!bp) return toast.error("Please complete the button message builder (body is required).");
+
+      try {
+        await createCampaign({
+          ...values,
+          isButtonCampaign: true,
+          buttonPayloadJson: JSON.stringify(bp),
+          message: bp.body,
+        });
+        toast.success("Button Campaign Created!");
+        form.reset();
+        buttonPayloadRef.current = null;
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Error creating campaign");
+      }
+      return;
+    }
+
+    // Text campaign path (existing logic)
     if (!file && !values.message) {
       return toast.error("Message or media is required");
     }
@@ -99,16 +132,18 @@ export default function CampaignForm({
   }
 
   return (
-    <Card>
+    <Card className={mode === "button" ? "max-w-4xl mx-auto" : ""}>
       <CardHeader>
         <CardTitle>Campaign Details</CardTitle>
         <CardDescription>
           Fill out the form to create a new campaign.
         </CardDescription>
       </CardHeader>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
+            {/* Campaign name */}
             <FormField
               name="name"
               render={({ field }) => (
@@ -125,6 +160,7 @@ export default function CampaignForm({
               )}
             />
 
+            {/* Contact Group */}
             <FormField
               name="contactGroupId"
               render={({ field }) => (
@@ -152,21 +188,7 @@ export default function CampaignForm({
               )}
             />
 
-            <FormField
-              name="message"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Message</FormLabel>
-                  <FormControl>
-                    <EmojiTextarea
-                      placeholder="Write your campaign message here..."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Sender */}
             <FormField
               name="sender"
               render={({ field }) => (
@@ -190,19 +212,71 @@ export default function CampaignForm({
                 </FormItem>
               )}
             />
-            <FormField
-              name="media"
-              render={({}) => (
-                <FormItem>
-                  <FormLabel>Media</FormLabel>
-                  <FormControl>
-                    <MediaUpload onFileSelect={handleFileSelect} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
+            {/* Message type toggle */}
+            <div className="space-y-1.5">
+              <FormLabel>Message Type</FormLabel>
+              <Tabs
+                value={mode}
+                onValueChange={(v) => {
+                  setMode(v as CampaignMode);
+                  form.setValue("isButtonCampaign", v === "button");
+                }}
+              >
+                <TabsList className="w-full">
+                  <TabsTrigger value="text" className="flex-1 gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Text / Media
+                  </TabsTrigger>
+                  <TabsTrigger value="button" className="flex-1 gap-2">
+                    <LayoutTemplate className="h-4 w-4" />
+                    Button Message
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+
+            {/* ── Text mode ───────────────────────────────────────────── */}
+            {mode === "text" && (
+              <>
+                <FormField
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Message</FormLabel>
+                      <FormControl>
+                        <EmojiTextarea
+                          placeholder="Write your campaign message here..."
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  name="media"
+                  render={({}) => (
+                    <FormItem>
+                      <FormLabel>Media</FormLabel>
+                      <FormControl>
+                        <MediaUpload onFileSelect={handleFileSelect} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {/* ── Button mode ─────────────────────────────────────────── */}
+            {mode === "button" && (
+              <ButtonMessageBuilder
+                onChange={(p) => { buttonPayloadRef.current = p; }}
+              />
+            )}
           </CardContent>
+
           <CardFooter className="flex justify-end">
             <Button type="submit">Create Campaign</Button>
           </CardFooter>

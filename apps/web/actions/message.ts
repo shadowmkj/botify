@@ -2,8 +2,10 @@
 
 import { MessageService } from "@/lib/messageService"
 import { phoneNumberSchema } from "@/types"
-import {  prisma } from "@repo/db"
+import { prisma } from "@repo/db"
 import z from "zod"
+import { buildButtonMessageArgs } from "@/lib/buildButtonPayload"
+import type { ButtonMessagePayload } from "@/components/message/ButtonMessageTypes"
 
 const sendMessageZSchema = z.object({
   message: z.string().max(500).default(''),
@@ -61,5 +63,64 @@ export const sendMessage = async (data: Props) => {
   return {
     status: true,
     message: "Message queued successfully",
+  }
+}
+
+// ─── Button Message ───────────────────────────────────────────────────────────
+
+const sendButtonZSchema = z.object({
+  receiver: phoneNumberSchema,
+  sender: phoneNumberSchema,
+})
+
+interface SendButtonProps {
+  receiver: string
+  sender: string
+  buttonPayload: ButtonMessagePayload
+}
+
+export const sendButtonMessage = async ({ receiver, sender, buttonPayload }: SendButtonProps) => {
+  const validated = sendButtonZSchema.safeParse({ receiver, sender })
+  if (!validated.success) {
+    throw new Error("Invalid data: " + JSON.stringify(validated.error))
+  }
+
+  if (!buttonPayload.body.trim()) {
+    throw new Error("Button message body is required.")
+  }
+  if (buttonPayload.buttons.length === 0) {
+    throw new Error("At least one button is required.")
+  }
+  if (buttonPayload.buttons.length > 3) {
+    throw new Error("Maximum 3 buttons allowed.")
+  }
+
+  try {
+    const device = await prisma.device.findUnique({
+      where: { body: validated.data.sender },
+      select: { userId: true },
+    })
+    if (!device) throw new Error("Device not found")
+
+    const { title, text, footer, buttons } = buildButtonMessageArgs(buttonPayload)
+    const svc = new MessageService(validated.data.sender, device.userId)
+    await svc.queueButtonMessage(
+      validated.data.receiver,
+      text,
+      text,
+      title,
+      footer ?? "",
+      buttons
+    )
+  } catch (error: any) {
+    if (error?.code === "QUOTA_EXCEEDED") {
+      throw new Error("Your plan limit is reached. Upgrade your plan or wait for reset.")
+    }
+    throw new Error("Failed to queue button message: " + error)
+  }
+
+  return {
+    status: true,
+    message: "Button message queued successfully",
   }
 }

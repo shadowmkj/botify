@@ -148,4 +148,51 @@ export class MessageService {
             { attempts: 3, removeOnComplete: true, removeOnFail: true }
         )
     }
+
+    /**
+     * Fan out individual send-button jobs for a button campaign (Option A).
+     * Looks up the campaign's contacts via blast records, builds Baileys buttons
+     * from the stored buttonPayloadJson, and adds one job per contact.
+     */
+    async queueButtonCampaign(campaignId: string, buttonPayloadJson: string) {
+        const campaign = await prisma.campaign.findUnique({
+            where: { id: campaignId },
+            include: {
+                blasts: {
+                    include: { contact: true }
+                }
+            }
+        })
+
+        if (!campaign || campaign.blasts.length === 0) return null
+
+        // Lazily import to keep the server-side util out of the client bundle
+        const { buildButtonMessageArgs } = await import("@/lib/buildButtonPayload")
+
+        let parsed: any
+        try {
+            parsed = JSON.parse(buttonPayloadJson)
+        } catch {
+            throw new Error("Invalid buttonPayloadJson")
+        }
+
+        const { title, text, footer, buttons } = buildButtonMessageArgs(parsed)
+
+        return this.queue.addBulk(
+            campaign.blasts.map((blast) => ({
+                name: "send-button",
+                data: {
+                    type: "send-button" as const,
+                    sender: this.sender,
+                    receiver: blast.contact.phone,
+                    title,
+                    text,
+                    footer: footer ?? "",
+                    buttons,
+                },
+                opts: { attempts: 3, removeOnComplete: true, removeOnFail: true },
+            }))
+        )
+    }
 }
+

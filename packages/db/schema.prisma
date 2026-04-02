@@ -203,6 +203,7 @@ enum MessageType {
     Image
     Video
     Document
+    Button
 }
 
 enum BlastStatus {
@@ -260,19 +261,20 @@ model ContactGroup {
 }
 
 model Campaign {
-    id           String      @id @default(uuid())
-    name         String
-    senderNumber String
-    userId       String
-    campaignType MessageType
-    description  String?
-    message      String?
-    media        String?
-    blasts       Blast[]
-    user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-    scheduledAt  DateTime?
-    createdAt    DateTime    @default(now())
-    updatedAt    DateTime    @updatedAt
+    id             String      @id @default(uuid())
+    name           String
+    senderNumber   String
+    userId         String
+    campaignType   MessageType
+    description    String?
+    message        String?
+    media          String?
+    buttonPayload  Json?       // Stored when campaignType == Button
+    blasts         Blast[]
+    user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    scheduledAt    DateTime?
+    createdAt      DateTime    @default(now())
+    updatedAt      DateTime    @updatedAt
 }
 
 model Autoreply {

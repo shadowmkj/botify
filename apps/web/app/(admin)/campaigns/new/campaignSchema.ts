@@ -15,7 +15,17 @@ export const createCampaignSchema = z.object({
     message: 'Please select a contact group.',
   }),
   media: z.string().optional(),
+  /** JSON-serialised ButtonMessagePayload — present only when campaignType is 'Button' */
+  buttonPayloadJson: z.string().optional(),
+  /** Whether this is a button campaign */
+  isButtonCampaign: z.boolean().default(false),
 }).superRefine((data, ctx) => {
+  if (data.isButtonCampaign) {
+    if (!data.buttonPayloadJson) {
+      ctx.addIssue({ code: 'custom', message: 'Button message payload is required for button campaigns.' });
+    }
+    return;
+  }
   const hasMessage = typeof data.message === 'string' && data.message.trim().length > 0;
   const hasMedia = typeof data.media === 'string' && data.media.trim().length > 0;
   if (!hasMessage && !hasMedia) {
