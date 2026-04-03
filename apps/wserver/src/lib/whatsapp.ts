@@ -16,7 +16,7 @@ export async function startWhatsAppSession(
     logger.info(`Starting WhatsApp session for: ${number}`);
 
 
-    if (sessions.has(number) && !fromJob) {
+    if (sessions.has(number) && !fromJob && process.env.NODE_ENV === "production") {
         logger.info(`Session for ${number} already exists.`);
         let curr_socket = sessions.get(number);
         if (curr_socket?.ws.isOpen) {
@@ -26,7 +26,7 @@ export async function startWhatsAppSession(
         }
     }
 
-    if (fromJob) {
+    if (fromJob && process.env.NODE_ENV === "production") {
         sessions.delete(number)
     }
 

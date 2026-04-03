@@ -178,6 +178,7 @@ export class MessageService {
         // Lazily import to keep the server-side util out of the client bundle
         const { buildButtonMessageArgs } = await import("@/lib/buildButtonPayload")
 
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
         let parsed: any
         try {
             parsed = JSON.parse(buttonPayloadJson)
@@ -205,4 +206,3 @@ export class MessageService {
         )
     }
 }
-

@@ -2,7 +2,7 @@ import { MessageService } from '@/lib/messageService'
 import { NativeButtonSchema, RawButton } from '@repo/types';
 import { NextResponse } from 'next/server'
 import z from 'zod';
-export async function GET(request: Request) {
+export async function GET() {
     // return NextResponse.json({ status: true })
     const raw_buttons: RawButton[] = [
         {

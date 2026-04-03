@@ -1,5 +1,5 @@
 import { Job, Queue, Worker, JobsOptions } from 'bullmq';
-import { redis } from '@repo/redis';
+import { redisOptions } from '@repo/redis';
 import { startWhatsAppSession } from './lib/whatsapp';
 import { sleep } from './utils/common';
 import { QUEUE_NAME } from './utils/constants';
@@ -59,7 +59,7 @@ export const sessions: Map<string, WASocket> = new Map();
 export const msgRetryCounterCache = new NodeCache();
 
 const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis,
+    connection: redisOptions(),
 });
 
 new Worker<WhatsappJob>(
@@ -103,10 +103,10 @@ new Worker<WhatsappJob>(
                         if (media && !media.startsWith('data:')) {
                             const inferred = mediaType
                                 ? {
-                                      kind: mediaType as 'image' | 'video' | 'document',
-                                      mime: mimeType,
-                                      name: fileName,
-                                  }
+                                    kind: mediaType as 'image' | 'video' | 'document',
+                                    mime: mimeType,
+                                    name: fileName,
+                                }
                                 : inferFromUrl(media);
 
                             const messageObject: any = {};
@@ -339,7 +339,7 @@ new Worker<WhatsappJob>(
         }
     },
     {
-        connection: redis,
+        connection: redisOptions(),
         removeOnComplete: {
             age: 0,
         },

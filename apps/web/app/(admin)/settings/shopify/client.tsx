@@ -265,7 +265,7 @@ export function ShopifySettingsClient({
                       />
                     </FormControl>
                     <FormDescription>
-                      Your shop's myshopify.com domain (e.g.,{" "}
+                      Your shop&apos;s myshopify.com domain (e.g.,{" "}
                       <code className="text-xs bg-muted px-1 py-0.5 rounded">
                         yourstore.myshopify.com
                       </code>

@@ -5,7 +5,7 @@ dotenv.config({
     path: "../../.env",
 });
 
-const getOptions = () => ({
+export const redisOptions = () => ({
     port: Number(process.env.REDIS_PORT) || 6379,
     host: process.env.REDIS_HOST || "localhost",
     maxRetriesPerRequest: null,
@@ -21,7 +21,7 @@ const globalForRedis = globalThis as unknown as {
     __redisSubscriber?: RedisClient;
 };
 
-const redisInstance = globalForRedis.__redis ?? new Redis(getOptions());
+const redisInstance = globalForRedis.__redis ?? new Redis(redisOptions());
 if (!isProd) globalForRedis.__redis = redisInstance;
 
 const subscriberInstance =

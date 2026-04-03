@@ -309,6 +309,7 @@ const LogoLoop = React.memo<LogoLoopProps>(
                         {(item as any).node}
                     </span>
                 ) : (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                         className={cx(
                             "h-(--logoloop-logoHeight) w-auto block object-contain",

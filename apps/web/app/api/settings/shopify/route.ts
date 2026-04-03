@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     // Do NOT log the error payload — it may contain the API key
     console.error("[settings/shopify] Failed to update Shopify settings");
     return NextResponse.json(

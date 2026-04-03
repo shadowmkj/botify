@@ -12,20 +12,15 @@ export const runtime = 'nodejs'
 
 export async function POST(request: Request) {
     try {
-        let from: string | null = null
-        let to: string
-        let title: string
-        let text: string
-        let footer: string
         const body = await request.json()
-        let buttons: string = body.buttons;
-        from = body.from
-        to = body.to
+        const buttons: string = body.buttons;
+        let from: string | null = body.from
+        let to: string = body.to
         from = parsePhoneNumberFromString(from!, "IN")?.number!
         to = parsePhoneNumberFromString(to!, "IN")?.number!
-        title = body.title || ''
-        text = body.text || ''
-        footer = body.footer || ''
+        const title = body.title || ''
+        const text = body.text || ''
+        const footer = body.footer || ''
         const parsedButtons = z.array(NativeButtonSchema).safeParse(buttons)
         if (!parsedButtons.success) {
             return NextResponse.json({ error: 'Invalid buttons object' }, { status: 400 })
