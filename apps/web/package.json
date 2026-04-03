@@ -60,7 +60,7 @@
     "emoji-mart": "^5.6.0",
     "framer-motion": "^12.34.3",
     "input-otp": "^1.4.2",
-    "ioredis": "^5.9.3",
+    "ioredis": "^5.10.1",
     "libphonenumber-js": "^1.12.37",
     "lucide-react": "^0.536.0",
     "mcp-handler": "^1.0.7",

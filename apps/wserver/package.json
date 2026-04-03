@@ -50,7 +50,7 @@
     "dayjs": "^1.11.19",
     "express": "^5.2.1",
     "form-data": "^4.0.5",
-    "ioredis": "^5.9.3",
+    "ioredis": "^5.10.1",
     "mime": "3.0.0",
     "node-cache": "^5.1.2",
     "pino": "^9.14.0",

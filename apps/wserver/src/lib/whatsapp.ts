@@ -15,31 +15,37 @@ export async function startWhatsAppSession(
     fromJob: boolean = false): Promise<WASocket> {
     logger.info(`Starting WhatsApp session for: ${number}`);
 
-
-    if (sessions.has(number) && !fromJob && process.env.NODE_ENV === "production") {
+    // Reuse existing session if the WebSocket is still open (works in all environments)
+    if (sessions.has(number) && !fromJob) {
         logger.info(`Session for ${number} already exists.`);
-        let curr_socket = sessions.get(number);
+        const curr_socket = sessions.get(number);
         if (curr_socket?.ws.isOpen) {
-            return sessions.get(number) as WASocket
+            return curr_socket;
         } else {
-            sessions.delete(number)
+            // Socket exists but is dead — clean it up before recreating
+            logger.info(`Session for ${number} exists but socket is closed. Cleaning up.`);
+            sessions.delete(number);
         }
     }
 
-    if (fromJob && process.env.NODE_ENV === "production") {
-        sessions.delete(number)
+    // If called from a BullMQ job, close the old socket gracefully before recreating
+    if (fromJob && sessions.has(number)) {
+        const oldSock = sessions.get(number);
+        try {
+            oldSock?.end(undefined);
+        } catch (e) {
+            // ignore — socket may already be dead
+        }
+        sessions.delete(number);
     }
 
     if (startingPromises.has(number)) {
-        logger.warn(`Session ${number} is already in the process of starting.
-                    Ignoring duplicate request.`);
+        logger.warn(`Session ${number} is already in the process of starting. Ignoring duplicate request.`);
         return startingPromises.get(number) as Promise<WASocket>;
     }
 
-
     const startupPromise = (async () => {
         logger.info(`Starting new Baileys session: ${number}`);
-        let lastConnectionUpdate = Date.now();
         try {
             const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
             const { version } = await fetchLatestBaileysVersion();
@@ -60,13 +66,11 @@ export async function startWhatsAppSession(
                 generateHighQualityLinkPreview: true,
             });
 
-            // OPTIM:
             sessions.set(number, sock);
 
             sock.ev.on('connection.update', async (update) => {
-                lastConnectionUpdate = Date.now();
                 const { connection, lastDisconnect, qr } = update;
-                console.log(sessions)
+
                 if (qr) {
                     const data = {
                         qr: qr,
@@ -74,57 +78,54 @@ export async function startWhatsAppSession(
                     }
                     if (connection != 'open') {
                         redis.publish(`qr:${number}`, JSON.stringify(data)).then(res => {
-                            logger.info(`QR code for ${number} published to Redis channel: qr:${number},
-                            result: ${res}`);
+                            logger.info(`QR code for ${number} published to Redis channel: qr:${number}, result: ${res}`);
                         })
                         qrcode.generate(qr, { small: true }, (qrcode) => {
                             console.log(qrcode);
                         });
                     }
                 }
+
                 switch (connection) {
                     case 'close':
-                        const statusCode = (lastDisconnect?.error as Boom)?.output.statusCode;
-                        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-                        if (!shouldReconnect) {
+                        const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode;
+                        logger.info(`Connection closed for ${number} (Status: ${statusCode})`);
+
+                        if (statusCode === DisconnectReason.loggedOut) {
+                            // User explicitly logged out — wipe auth and notify frontend
                             logger.info(`Session for ${number} logged out. Cleaning up session data.`);
                             sessions.delete(number);
-                            const data = {
-                                event: "LOGOUT"
-                            }
                             await Promise.all([
                                 deleteSessionFromRedis(redis, `${number}`),
                                 updateDeviceStatus(number, "Disconnected"),
-                                redis.publish(`qr:${number}`, JSON.stringify(data))
-                            ])
-
-                            startWhatsAppSession(number).catch(err => {
-                                logger.error(`Failed to restart: ${number}\n Error: ${err}`)
-                            })
+                                redis.publish(`qr:${number}`, JSON.stringify({ event: "LOGOUT" }))
+                            ]);
+                            // Don't auto-restart after logout; user must re-scan intentionally
                         }
-                        else if ((lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.restartRequired) {
-                            logger.info(`Restarting session ${number}`)
+                        else if (statusCode === DisconnectReason.connectionReplaced) {
+                            // Another socket took over (e.g. hot-reload or duplicate start)
+                            // Auth state is still valid — do NOT delete from Redis
+                            logger.info(`Connection replaced for ${number}. Auth state preserved.`);
+                            sessions.delete(number);
+                            await updateDeviceStatus(number, "Disconnected");
+                        }
+                        else if (statusCode === DisconnectReason.restartRequired) {
+                            logger.info(`Restart required for session ${number}`);
                             sessions.delete(number);
                             startWhatsAppSession(number).catch(err => {
                                 logger.error(`Failed to restart: ${number}\n Error: ${err}`)
-                            })
-                        } else if ((lastDisconnect?.error as Boom)?.output?.statusCode === DisconnectReason.connectionReplaced) {
-                            const data = {
-                                event: "LOGOUT"
-                            }
-                            await Promise.all([
-                                deleteSessionFromRedis(redis, `${number}`),
-                                updateDeviceStatus(number, "Disconnected"),
-                                redis.publish(`qr:${number}`, JSON.stringify(data))
-                            ])
+                            });
                         }
                         else {
-                            logger.info(`Connection closed for ${number} (Status: ${statusCode}). Reconnecting...`);
+                            // Any other close reason — reconnect using existing auth
+                            logger.info(`Reconnecting session ${number}...`);
+                            sessions.delete(number);
                             startWhatsAppSession(number, true).catch(err => {
                                 logger.error(`Failed to reconnect: ${number}\n Error: ${err}`)
                             });
                         }
                         break;
+
                     case 'open':
                         let profile = "https://avatar.iran.liara.run/public/40"
                         try {
@@ -132,38 +133,23 @@ export async function startWhatsAppSession(
                         } catch (error) {
                             console.error("Error fetching profile picture:", error);
                         }
-                        const data = {
-                            event: "OPEN",
-                            profile: profile
-                        }
 
                         await Promise.all([
                             updateDeviceStatus(number, "Connected"),
-                            redis.publish(`qr:${number}`, JSON.stringify(data))
-                        ])
-
+                            redis.publish(`qr:${number}`, JSON.stringify({
+                                event: "OPEN",
+                                profile: profile
+                            }))
+                        ]);
                         break;
                 }
             });
+
             sock.ev.on('creds.update', saveCreds);
             sock.ev.on('messages.upsert', async (m) => {
                 initAutoreply(m, number)
-            })
-            setInterval(() => {
-                const silentMs = Date.now() - lastConnectionUpdate;
-                if (silentMs > 120000) {
-                    console.warn(`No connection activity for ${Math.round(silentMs / 1000)}s — forcing disconnect`);
-                    sock.end(new Error("Zombie connection detected"));
-                    sessions.delete(number)
-                    Promise.all([
-                        deleteSessionFromRedis(redis, `${number}`),
-                        updateDeviceStatus(number, "Disconnected"),
-                        redis.publish(`qr:${number}`, JSON.stringify({
-                            event: "LOGOUT"
-                        }))
-                    ])
-                }
-            }, 30000);
+            });
+
             return sock;
         }
         catch (error) {
@@ -175,7 +161,29 @@ export async function startWhatsAppSession(
             startingPromises.delete(number);
         }
     })();
-    startingPromises.set(number, startupPromise)
-    return startupPromise
+
+    startingPromises.set(number, startupPromise);
+    return startupPromise;
 }
 
+/**
+ * Gracefully close all active sessions.
+ * Called on process exit to prevent orphaned connections
+ * that cause "connectionReplaced" on restart.
+ */
+export function gracefulShutdown() {
+    logger.info(`Graceful shutdown: closing ${sessions.size} session(s)...`);
+    for (const [number, sock] of sessions) {
+        try {
+            sock.end(undefined);
+            logger.info(`Closed session for ${number}`);
+        } catch (e) {
+            // ignore
+        }
+    }
+    sessions.clear();
+}
+
+// Register shutdown handlers
+process.on('SIGTERM', () => { gracefulShutdown(); process.exit(0); });
+process.on('SIGINT', () => { gracefulShutdown(); process.exit(0); });

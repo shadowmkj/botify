@@ -22,7 +22,7 @@
   "dependencies": {
     "@repo/db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "ioredis": "^5.9.3",
+    "ioredis": "^5.10.1",
     "libphonenumber-js": "^1.12.37",
     "zod": "^4.3.6"
   }
