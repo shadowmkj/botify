@@ -33,6 +33,7 @@ model User {
     shopifyKey    String?
     shopifyDomain String?
     shopifyTemplateId String?
+    staticLogoUrl String?
     shopifyTemplate   MessageTemplate? @relation("ShopifyTemplate", fields: [shopifyTemplateId], references: [id])
     messageTemplates  MessageTemplate[] @relation("UserMessageTemplates")
     oauthapplications OauthApplication[]

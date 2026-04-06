@@ -1,5 +1,5 @@
 import ProfileCard from "@/components/profile-card";
-
+import BrandingSettingsCard from "@/components/branding-settings-card";
 export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-6 w-full items-center justify-center">
@@ -9,6 +9,7 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 w-full max-w-4xl">
         <ProfileCard />
+        <BrandingSettingsCard />
       </div>
     </div>
   );

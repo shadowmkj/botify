@@ -7,4 +7,5 @@ export interface User {
    updatedAt: Date;
    role?: string | undefined | null;
    image?: string | null | undefined;
+   staticLogoUrl?: string | null | undefined;
 }
