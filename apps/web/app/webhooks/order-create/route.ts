@@ -49,8 +49,7 @@ export async function POST(request: Request) {
         console.log("Number: ", body.shipping_address?.phone || phone)
         // const targetPhone = body.shipping_address?.phone || phone || "+917902708908";
         const targetPhone = "+917902708908";
-        // const STATIC_LOGO_URL = "https://www.linvecreations.com/cdn/shop/files/linve.png?v=1774507969&width=165"; // Replace with your actual logo URL
-        const STATIC_LOGO_URL = "https://cdn.shopify.com/s/files/1/0721/5146/6041/files/linvered.png?v=1775490870"; // Replace with your actual logo URL
+        const STATIC_LOGO_URL = user.staticLogoUrl || "https://www.linvecreations.com/cdn/shop/files/linve.png?v=1774507969&width=165";
 
         if (body.order_status_url) {
             await svc.queueButtonMessage(
