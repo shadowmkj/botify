@@ -179,7 +179,7 @@ new Worker<WhatsappJob>(
                             `Sending message to ${receiver} from session ${validatedSender}`,
                         );
                         if (!noDelay) {
-                            const randomDelay = Math.floor(Math.random() * 1000) + 500; // Random delay between 500ms and 1500ms
+                            const randomDelay = Math.floor(Math.random() * 1000) + 2000; // Random delay between 500ms and 1500ms
                             await sleep(randomDelay);
                         }
                         const result = await sock.onWhatsApp(receiver);
