@@ -19,7 +19,7 @@ services:
     depends_on:
       - postgres
     env_file:
-      - production.env
+      - .env.prod
     command: sh -lc "pnpm --filter @repo/db exec prisma migrate deploy"
 
   app:
@@ -33,7 +33,7 @@ services:
       - redis
       - migrate
     env_file:
-      - production.env
+      - .env.prod
     environment:
       - MEDIA_STORAGE_DIR=/app/media
     volumes:
