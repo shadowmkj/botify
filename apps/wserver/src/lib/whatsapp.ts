@@ -7,8 +7,11 @@ import logger from "../utils/logger";
 import { Boom } from "@hapi/boom";
 import { updateDeviceStatus } from "./helper";
 import initAutoreply from "../autoreply";
+import { wrapWithSessionStability, LidResolver } from 'baileys-antiban';
 
 const startingPromises = new Map<string, Promise<WASocket>>();
+const resolver = new LidResolver({ canonical: 'pn' });
+
 
 export async function startWhatsAppSession(
     number: string,
@@ -49,7 +52,7 @@ export async function startWhatsAppSession(
         try {
             const { state, saveCreds } = await useRedisAuthState(redis, `${number}`);
             const { version } = await fetchLatestBaileysVersion();
-            const sock = makeWASocket({
+            const baseSock = makeWASocket({
                 version,
                 auth: {
                     creds: state.creds,
@@ -64,6 +67,17 @@ export async function startWhatsAppSession(
                 markOnlineOnConnect: false,
                 msgRetryCounterCache,
                 generateHighQualityLinkPreview: true,
+            });
+
+            const sock = wrapWithSessionStability(baseSock, {
+                canonicalJidNormalization: true,  // Auto-canonicalize JIDs before sendMessage
+                healthMonitoring: true,           // Auto-track decrypt health
+                lidResolver: resolver,
+                health: {
+                    badMacThreshold: 3,
+                    badMacWindowMs: 60_000,
+                    onDegraded: (stats) => console.error('Session degraded!'),
+                },
             });
 
             sessions.set(number, sock);
