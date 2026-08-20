@@ -3,6 +3,9 @@
 name: Continuous Integration
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -18,8 +21,6 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -30,11 +31,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run Linting on Affected Workspaces
-        run: pnpm turbo run lint --filter="...[origin/main]"
+      - name: Run Linting
+        run: pnpm turbo run lint
 
-      - name: Run Tests on Affected Workspaces
-        run: pnpm turbo run test --filter="...[origin/main]"
+      - name: Run Tests with Coverage
+        run: pnpm turbo run test:coverage
 
-      - name: Run Builds on Affected Workspaces
-        run: pnpm turbo run build --filter="...[origin/main]"
+      - name: Run Builds
+        run: pnpm turbo run build
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: ${{ github.repository }}
+          fail_ci_if_error: false

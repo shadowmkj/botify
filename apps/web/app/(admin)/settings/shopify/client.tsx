@@ -350,7 +350,7 @@ export function ShopifySettingsClient({
                     <li>
                         Go to <strong>Settings → Notifications → Webhooks</strong>
                     </li>
-                    <li>Check for <strong>"Your webhooks will be signed with"</strong></li>
+                    <li>Check for <strong>&quot;Your webhooks will be signed with&quot;</strong></li>
                     <li>Your API key will be alongside it</li>
                     <li>
                         Your domain is your store URL:{" "}

@@ -9,7 +9,8 @@
     "lint": "next lint",
     "socket": "tsx watch socket/server.ts",
     "check-types": "tsc --noEmit",
-    "test": "jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:coverage": "jest --coverage --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "@emoji-mart/data": "^1.2.1",

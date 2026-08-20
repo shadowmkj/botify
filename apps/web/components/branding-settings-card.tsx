@@ -26,8 +26,8 @@ export default function BrandingSettingsCard() {
           setUser({ ...user, staticLogoUrl: logoUrl })
         }
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to update logo")
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : "Failed to update logo")
     } finally {
       setLoading(false)
     }
@@ -54,12 +54,13 @@ export default function BrandingSettingsCard() {
         {logoUrl && (
           <div className="mt-4 p-4 border rounded-lg bg-muted/50 flex flex-col items-center justify-center gap-2">
             <p className="text-xs text-muted-foreground uppercase font-semibold">Preview</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img 
               src={logoUrl} 
               alt="Logo Preview" 
               className="max-h-20 object-contain"
               onError={(e) => {
-                (e.target as any).src = "https://placehold.co/200x80?text=Invalid+Image"
+                (e.currentTarget as HTMLImageElement).src = "https://placehold.co/200x80?text=Invalid+Image"
               }}
             />
           </div>
