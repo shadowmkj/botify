@@ -1,5 +1,8 @@
 # Botify 🚀
 
+[![CI](https://github.com/shadowmkj/botify/actions/workflows/ci.yml/badge.svg)](https://github.com/shadowmkj/botify/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/shadowmkj/botify/branch/main/graph/badge.svg)](https://codecov.io/gh/shadowmkj/botify)
+
 Botify is a modern WhatsApp automation system built with Next.js 15, with a worker that delivers queued messages over WhatsApp sessions.
 
 ## ✨ Features
