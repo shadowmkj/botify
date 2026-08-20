@@ -1,0 +1,64 @@
+# Codecov configuration file
+# Documentation: https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "70...100"
+
+  status:
+    # Project coverage measures overall coverage across the entire project
+    project:
+      default:
+        target: 85%
+        threshold: 0%
+        base: auto
+    # Patch coverage measures coverage for code modified in the current pull request
+    patch:
+      default:
+        target: 85%
+        threshold: 0%
+        base: auto
+
+# Flags to separate coverage reports by component
+flags:
+  web:
+    paths:
+      - apps/web/
+    carryforward: true
+  socket:
+    paths:
+      - apps/socket/
+    carryforward: true
+  wserver:
+    paths:
+      - apps/wserver/
+    carryforward: true
+  packages:
+    paths:
+      - packages/
+    carryforward: true
+
+# PR comment layout
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: false
+
+# Files/folders to ignore in coverage calculations
+ignore:
+  - "**/*.d.ts"
+  - "**/node_modules/**"
+  - "**/dist/**"
+  - "**/.next/**"
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.spec.ts"
+  - "**/*.spec.tsx"
+  - "**/jest.config.js"
+  - "**/jest.setup.js"
+  - "ai_docs/**"

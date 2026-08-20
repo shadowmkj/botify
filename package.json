@@ -13,6 +13,7 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:coverage": "turbo run test:coverage",
     "generate": "turbo run generate",
     "db:migrate:dev": "turbo run db:migrate:dev",
     "db:migrate:reset": "bun --cwd packages/db db:migrate:reset",

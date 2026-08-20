@@ -42,8 +42,14 @@
       "persistent": true,
       "cache": false
     },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
     "test": {
-      "persistent": true,
+      "cache": false
+    },
+    "test:coverage": {
+      "outputs": ["coverage/**"],
       "cache": false
     }
   }

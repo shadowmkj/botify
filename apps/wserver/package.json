@@ -10,7 +10,8 @@
     "build": "tsup src/worker.ts --format cjs,esm --dts",
     "q": "ts-node src/test.ts",
     "send": "ts-node src/send-message.ts",
-    "test": "jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:coverage": "jest --coverage --detectOpenHandles --forceExit"
   },
   "keywords": [],
   "author": "",

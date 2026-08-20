@@ -5,7 +5,8 @@
     "build": "tsup server.ts --format cjs,esm --dts",
     "start": "DOTENV_CONFIG_PATH=../../.env node -r dotenv/config dist/server.js",
     "dev": " ts-node-dev -r dotenv/config --respawn --transpile-only server.ts",
-    "test": "jest --detectOpenHandles --forceExit"
+    "test": "jest --detectOpenHandles --forceExit",
+    "test:coverage": "jest --coverage --detectOpenHandles --forceExit"
   },
   "devDependencies": {
     "@types/bun": "latest",
