@@ -1,2 +1,0 @@
-2025-06-23T17:54:08+05:30: Failed to send message error: SyntaxError: Unexpected token 'G', "Good Morning" is not valid JSON
-2025-06-23T17:56:56+05:30: Failed to send message error: SyntaxError: Unexpected token 'G', "GoodMorning" is not valid JSON
