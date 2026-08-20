@@ -27,7 +27,7 @@ describe("ApiKeyService", () => {
 
   it("should create api key with expiresIn", async () => {
     (authClient.apiKey.create as jest.Mock).mockResolvedValue({
-      data: { id: "k1", key: "sec_123" },
+      data: { id: "k1", key: "mock_api_key_token_1" },
       error: null,
     });
 
@@ -41,7 +41,7 @@ describe("ApiKeyService", () => {
 
   it("should handle expiresIn -1 as undefined on create", async () => {
     (authClient.apiKey.create as jest.Mock).mockResolvedValue({
-      data: { id: "k2", key: "sec_456" },
+      data: { id: "k2", key: "mock_api_key_token_2" },
       error: null,
     });
 
