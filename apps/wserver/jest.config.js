@@ -9,6 +9,11 @@ module.exports = {
   transform: {
     ...tsJestTransformCfg,
   },
+  moduleNameMapper: {
+    '^@repo/types$': '<rootDir>/../../packages/types/types.ts',
+    '^@repo/db$': '<rootDir>/../../packages/db/index.ts',
+    '^@repo/redis$': '<rootDir>/../../packages/redis/redis.ts',
+  },
   coverageDirectory: "<rootDir>/coverage",
   coverageReporters: ["json", "lcov", "text", "clover"],
   collectCoverageFrom: [

@@ -46,9 +46,11 @@
       "dependsOn": ["^lint"]
     },
     "test": {
+      "dependsOn": ["^build"],
       "cache": false
     },
     "test:coverage": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
       "cache": false
     }
