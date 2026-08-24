@@ -1,5 +1,5 @@
 # Stage 1: Builder
-FROM node:24-alpine AS builder
+FROM node:26-alpine AS builder
 
 # Install dependencies
 RUN apk add --no-cache libc6-compat openssl
@@ -27,7 +27,7 @@ RUN pnpm --filter @repo/db exec prisma generate
 RUN pnpm turbo run build
 
 # --- Stage 2: Runner ---
-FROM node:24-alpine AS runner
+FROM node:26-alpine AS runner
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
