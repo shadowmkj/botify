@@ -11,9 +11,9 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@types/jest": "^30.0.0",
-    "dotenv-cli": "^10.0.0",
-    "jest": "^30.2.0",
-    "ts-jest": "^29.4.6",
+    "dotenv-cli": "^11.0.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.12",
     "ts-node-dev": "^2.0.0",
     "tsup": "^8.5.1"
   },
