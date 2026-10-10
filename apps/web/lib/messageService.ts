@@ -73,6 +73,7 @@ export class MessageService {
         media?: string,
         opts?: { mediaType?: 'image' | 'video' | 'text' | 'document'; fileName?: string; mimeType?: string }
     ) {
+        await this.assertCanQueue(1)
         return this.queue.add(
             "send-button",
             {
@@ -174,6 +175,8 @@ export class MessageService {
         })
 
         if (!campaign || campaign.blasts.length === 0) return null
+
+        await this.assertCanQueue(campaign.blasts.length)
 
         // Lazily import to keep the server-side util out of the client bundle
         const { buildButtonMessageArgs } = await import("@/lib/buildButtonPayload")
