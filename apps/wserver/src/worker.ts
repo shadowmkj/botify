@@ -98,6 +98,12 @@ new Worker<WhatsappJob>(
                         );
                         console.log(JSON.stringify(buttons))
                         const result = await sock.onWhatsApp(receiver);
+                        const isRegistered = Array.isArray(result) && result.length > 0 && Boolean(result[0]?.jid);
+                        if (!isRegistered) {
+                            logger.warn(`Receiver ${receiver} is not registered on WhatsApp`);
+                            break;
+                        }
+                        const receiverJid = result[0].jid;
                         let mediaMsg: any = undefined;
 
                         if (media && !media.startsWith('data:')) {
@@ -142,7 +148,7 @@ new Worker<WhatsappJob>(
                             };
                         }
 
-                        const resp = await sendInteractiveMessage(sock, result ? result[0].jid : '', {
+                        const resp = await sendInteractiveMessage(sock, receiverJid, {
                             interactiveMessage: content.interactiveMessage
                         });
                         logger.info(`Interactive message sent with resp: ${resp?.key?.id}`);
@@ -183,6 +189,22 @@ new Worker<WhatsappJob>(
                             await sleep(randomDelay);
                         }
                         const result = await sock.onWhatsApp(receiver);
+                        const isRegistered = Array.isArray(result) && result.length > 0 && Boolean(result[0]?.jid);
+                        if (!isRegistered) {
+                            logger.warn(`Receiver ${receiver} is not registered on WhatsApp`);
+                            if (blastId) {
+                                await prisma.blast.update({
+                                    where: {
+                                        id: blastId,
+                                    },
+                                    data: {
+                                        status: 'Failed',
+                                    },
+                                });
+                            }
+                            break;
+                        }
+                        const receiverJid = result[0].jid;
                         let response;
                         if (media) {
                             const isDataUrl = media.startsWith('data:');
@@ -203,7 +225,7 @@ new Worker<WhatsappJob>(
                                     messageObject.fileName = `${Date.now()}.${fileType}`;
                                 }
                                 response = await sock.sendMessage(
-                                    result ? result[0].jid : '',
+                                    receiverJid,
                                     messageObject,
                                 );
                             } else {
@@ -228,12 +250,12 @@ new Worker<WhatsappJob>(
                                         fileName || inferred.name || `${Date.now()}`;
                                 }
                                 response = await sock.sendMessage(
-                                    result ? result[0].jid : '',
+                                    receiverJid,
                                     messageObject,
                                 );
                             }
                         } else {
-                            response = await sock.sendMessage(result ? result[0].jid : '', {
+                            response = await sock.sendMessage(receiverJid, {
                                 text: message,
                             });
                         }

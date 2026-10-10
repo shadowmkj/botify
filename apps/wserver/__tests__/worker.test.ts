@@ -144,6 +144,57 @@ describe('wserver worker job processor', () => {
     expect(mockSock.onWhatsApp).toHaveBeenCalled();
   });
 
+  it('should safely handle send-button when receiver is not registered on WhatsApp', async () => {
+    const { sendInteractiveMessage } = require('baileys_helper');
+    const mockSock = {
+      onWhatsApp: jest.fn().mockResolvedValue([]),
+      waUploadToServer: jest.fn(),
+    };
+    workerModule.sessions.set('+919999999999', mockSock);
+
+    await workerProcessor({
+      name: 'send-button',
+      data: {
+        type: 'send-button',
+        sender: '+919999999999',
+        receiver: '+910000000000',
+        text: 'Hello',
+        buttons: [],
+      },
+    });
+
+    expect(mockSock.onWhatsApp).toHaveBeenCalledWith('+910000000000');
+    expect(sendInteractiveMessage).not.toHaveBeenCalled();
+  });
+
+  it('should safely handle send-message when receiver is not registered on WhatsApp and mark blast as Failed', async () => {
+    const { prisma } = require('@repo/db');
+    const mockSock = {
+      onWhatsApp: jest.fn().mockResolvedValue([]),
+      sendMessage: jest.fn(),
+    };
+    workerModule.sessions.set('+919999999999', mockSock);
+
+    await workerProcessor({
+      name: 'send-message',
+      data: {
+        type: 'send-message',
+        sender: '+919999999999',
+        receiver: '+910000000000',
+        message: 'Hello',
+        blastId: 'blast_unreg',
+        noDelay: true,
+      },
+    });
+
+    expect(mockSock.onWhatsApp).toHaveBeenCalledWith('+910000000000');
+    expect(mockSock.sendMessage).not.toHaveBeenCalled();
+    expect(prisma.blast.update).toHaveBeenCalledWith({
+      where: { id: 'blast_unreg' },
+      data: { status: 'Failed' },
+    });
+  });
+
   it('should process send-message with video, image, document, and data URLs', async () => {
     const mockSock = {
       onWhatsApp: jest.fn().mockResolvedValue([{ jid: '918888888888@s.whatsapp.net' }]),
