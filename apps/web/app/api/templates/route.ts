@@ -17,7 +17,7 @@ export async function GET() {
             where: { userId: session.user.id },
             orderBy: { createdAt: "desc" }
         });
-        return NextResponse.json(templates);
+        return NextResponse.json(templates, { status: 200 });
     } catch (error) {
         console.error("Failed to fetch templates:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

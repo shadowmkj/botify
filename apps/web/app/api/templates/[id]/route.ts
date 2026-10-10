@@ -15,14 +15,22 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const { id } = await params;
 
     try {
+        const template = await prisma.messageTemplate.findFirst({
+            where: {
+                id,
+                userId: session.user.id
+            }
+        });
+
+        if (!template) {
+            return NextResponse.json({ error: "Template not found" }, { status: 404 });
+        }
+
         const body = await req.json();
         const { name, content, type } = body;
 
         const updatedTemplate = await prisma.messageTemplate.update({
-            where: {
-                id,
-                userId: session.user.id
-            },
+            where: { id: template.id },
             data: {
                 ...(name && { name }),
                 ...(content && { content }),
@@ -49,11 +57,19 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     const { id } = await params;
 
     try {
-        await prisma.messageTemplate.delete({
+        const template = await prisma.messageTemplate.findFirst({
             where: {
                 id,
                 userId: session.user.id
             }
+        });
+
+        if (!template) {
+            return NextResponse.json({ error: "Template not found" }, { status: 404 });
+        }
+
+        await prisma.messageTemplate.delete({
+            where: { id: template.id }
         });
 
         return NextResponse.json({ message: "Template deleted" }, { status: 200 });
