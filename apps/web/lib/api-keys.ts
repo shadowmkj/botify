@@ -35,6 +35,7 @@ export interface UpdateApiKeyInput {
     keyId: string;
     name?: string;
     enabled?: boolean;
+    expiresIn?: number | null; // in seconds
     remaining?: number;
     refillAmount?: number;
     refillInterval?: number;

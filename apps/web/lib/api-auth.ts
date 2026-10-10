@@ -25,7 +25,8 @@ export async function verifyApiAccess(
     })
 
     if (!result?.valid || !result.key) {
-      const status = result?.error?.code === "RATE_LIMIT_EXCEEDED" ? 429 : 401
+      const isRateLimited = result?.error?.code === "RATE_LIMITED" || result?.error?.code === "RATE_LIMIT_EXCEEDED"
+      const status = isRateLimited ? 429 : 401
       throw new Response(
         JSON.stringify({ error: status === 429 ? "API key rate limit reached" : "Invalid or unauthorized API key" }),
         { status, headers: { "content-type": "application/json" } }

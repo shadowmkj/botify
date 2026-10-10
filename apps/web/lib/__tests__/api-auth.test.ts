@@ -45,7 +45,7 @@ describe("verifyApiAccess", () => {
     expect(ctx.key).toEqual({ id: "k1", userId: "user_abc" });
   });
 
-  it("should throw 429 when rate limit is exceeded", async () => {
+  it("should throw 429 when rate limit is exceeded (RATE_LIMIT_EXCEEDED)", async () => {
     const req = new Request("http://localhost/api/test", {
       headers: { "x-api-key": "rate_limited_key" },
     });
@@ -53,6 +53,25 @@ describe("verifyApiAccess", () => {
     (auth.api.verifyApiKey as jest.Mock).mockResolvedValue({
       valid: false,
       error: { code: "RATE_LIMIT_EXCEEDED" },
+    });
+
+    try {
+      await verifyApiAccess(req);
+    } catch (e: any) {
+      expect(e.status).toBe(429);
+      const json = await e.json();
+      expect(json.error).toBe("API key rate limit reached");
+    }
+  });
+
+  it("should throw 429 when rate limit is exceeded (RATE_LIMITED)", async () => {
+    const req = new Request("http://localhost/api/test", {
+      headers: { "x-api-key": "rate_limited_key" },
+    });
+
+    (auth.api.verifyApiKey as jest.Mock).mockResolvedValue({
+      valid: false,
+      error: { code: "RATE_LIMITED" },
     });
 
     try {

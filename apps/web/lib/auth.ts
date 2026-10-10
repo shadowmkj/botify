@@ -40,6 +40,14 @@ export const auth = betterAuth({
         }),
         admin(),
         apiKey({
+            rateLimit: {
+                enabled: false,
+            },
+            keyExpiration: {
+                minExpiresIn: 0,
+                maxExpiresIn: 365,
+                defaultExpiresIn: null,
+            },
             permissions: {
                 defaultPermissions: {
                     messages: ["send", "send_media"],
