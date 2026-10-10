@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@repo/db";
 import { ShopifySettingsClient } from "./client";
+import { maskShopifyKey } from "@/lib/shopify";
 
 export default async function ShopifySettingsPage() {
   const session = await auth.api.getSession({
@@ -36,7 +37,7 @@ export default async function ShopifySettingsPage() {
 
   return (
     <ShopifySettingsClient
-      shopifyKey={user?.shopifyKey ?? null}
+      shopifyKey={maskShopifyKey(user?.shopifyKey)}
       shopifyDomain={user?.shopifyDomain ?? null}
       updatedAt={user?.updatedAt ?? null}
       shopifyTemplateId={user?.shopifyTemplateId ?? null}

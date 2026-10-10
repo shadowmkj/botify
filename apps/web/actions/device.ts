@@ -51,15 +51,19 @@ export const addDevice = async (data: DeviceCreateValues) => {
     const session = await auth.api.getSession({
         headers: await headers()
     })
+    if (!session?.user?.id) {
+        return sendErrorResponse({
+            error: "User not authenticated"
+        })
+    }
     try {
         const res = await prisma.device.create({
             data: {
                 body: number,
-                userId: session?.user.id!,
+                userId: session.user.id,
             }
         })
         if (res) {
-            console.log(res)
             return sendSuccessResponse(res);
         } else {
             return sendErrorResponse({
@@ -82,9 +86,14 @@ export const deleteDevice = async (id: string) => {
     const session = await auth.api.getSession({
         headers: await headers()
     })
+    if (!session?.user?.id) {
+        return sendErrorResponse({
+            message: "User not authenticated"
+        })
+    }
     const device = await prisma.device.findFirst({
         where: {
-            userId: session?.user.id!,
+            userId: session.user.id,
             id: id
         }
     })
@@ -110,21 +119,32 @@ export const deleteDevice = async (id: string) => {
 }
 
 export const logoutDevice = async (id: string) => {
+    const session = await auth.api.getSession({
+        headers: await headers()
+    })
+    if (!session?.user?.id) {
+        throw new Error("User not authenticated")
+    }
+
     const device = await prisma.device.findFirst({
         where: {
-            id: id
+            id: id,
+            userId: session.user.id
         }
     })
+    if (!device) {
+        throw new Error("Device not found")
+    }
+
     const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-        connection:
-        {
+        connection: {
             host: process.env.REDIS_HOST || "localhost",
             port: Number(process.env.REDIS_PORT) || 6379,
             maxRetriesPerRequest: null
         },
-
     })
-    await queue.add("logout", { sender: device?.body!, type: "logout" })
+    await queue.add("logout", { sender: device.body, type: "logout" })
+    await queue.close()
     return true
 }
 

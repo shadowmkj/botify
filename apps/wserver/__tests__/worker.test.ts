@@ -27,11 +27,11 @@ jest.mock('@repo/db', () => ({
     },
     blast: {
       findFirst: jest.fn(),
-      update: jest.fn(),
+      update: jest.fn().mockResolvedValue({}),
     },
     device: {
-      findMany: jest.fn(),
-      update: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      update: jest.fn().mockResolvedValue({}),
     },
   },
 }));
@@ -304,6 +304,46 @@ describe('wserver worker job processor', () => {
         campaignId: 'camp_missing',
       },
     });
+  });
+
+  it('should throw error when session is not found for send-button job', async () => {
+    workerModule.sessions.delete('+919999999999');
+
+    await expect(
+      workerProcessor({
+        name: 'send-button',
+        data: {
+          type: 'send-button',
+          sender: '+919999999999',
+          receiver: '+918888888888',
+          text: 'Hello',
+          buttons: [],
+        },
+      })
+    ).rejects.toThrow('Session +919999999999 not found. Cannot send button message.');
+  });
+
+  it('should throw error and rethrow when sendInteractiveMessage fails', async () => {
+    const { sendInteractiveMessage } = require('baileys_helper');
+    const mockSock = {
+      onWhatsApp: jest.fn().mockResolvedValue([{ jid: '918888888888@s.whatsapp.net' }]),
+      waUploadToServer: jest.fn(),
+    };
+    workerModule.sessions.set('+919999999999', mockSock);
+    sendInteractiveMessage.mockRejectedValueOnce(new Error('Baileys delivery failed'));
+
+    await expect(
+      workerProcessor({
+        name: 'send-button',
+        data: {
+          type: 'send-button',
+          sender: '+919999999999',
+          receiver: '+918888888888',
+          text: 'Hello',
+          buttons: [],
+        },
+      })
+    ).rejects.toThrow('Baileys delivery failed');
   });
 
   it('should process logout job and cleanup session', async () => {

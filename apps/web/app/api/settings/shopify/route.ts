@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@repo/db";
 import { headers } from "next/headers";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
+import { maskShopifyKey } from "@/lib/shopify";
 
 const shopifySchema = z.object({
   shopifyKey: z
@@ -19,7 +20,7 @@ const shopifySchema = z.object({
   shopifyTemplateId: z.string().optional().nullable(),
 });
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -41,18 +42,26 @@ export async function POST(req: NextRequest) {
 
     const { shopifyKey, shopifyDomain, shopifyTemplateId } = parsed.data;
 
+    const dataToUpdate: {
+      shopifyDomain: string;
+      shopifyTemplateId: string | null;
+      shopifyKey?: string;
+    } = {
+      shopifyDomain,
+      shopifyTemplateId: shopifyTemplateId || null,
+    };
+
+    if (!shopifyKey.includes("****")) {
+      dataToUpdate.shopifyKey = shopifyKey;
+    }
+
     await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        shopifyKey,
-        shopifyDomain,
-        shopifyTemplateId: shopifyTemplateId || null,
-      },
+      data: dataToUpdate,
     });
 
     return NextResponse.json({ success: true });
   } catch {
-    // Do NOT log the error payload — it may contain the API key
     console.error("[settings/shopify] Failed to update Shopify settings");
     return NextResponse.json(
       { error: "Internal server error" },
@@ -82,7 +91,8 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      shopifyKey: user?.shopifyKey ?? null,
+      shopifyKey: maskShopifyKey(user?.shopifyKey),
+      hasShopifyKey: Boolean(user?.shopifyKey),
       shopifyDomain: user?.shopifyDomain ?? null,
       shopifyTemplateId: user?.shopifyTemplateId ?? null,
       updatedAt: user?.updatedAt ?? null,

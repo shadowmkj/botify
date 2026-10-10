@@ -39,6 +39,15 @@ describe("plan actions", () => {
       (auth.api.getSession as jest.Mock).mockResolvedValue(null);
       await expect(
         createPlan({ name: "Basic", price: 10, devicesLimit: 1 })
+      ).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if user is not admin for createPlan", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue({
+        user: { id: "user_1", role: "user" },
+      });
+      await expect(
+        createPlan({ name: "Basic", price: 10, devicesLimit: 1 })
       ).rejects.toThrow("Not authorized");
     });
 
@@ -46,24 +55,40 @@ describe("plan actions", () => {
       (auth.api.getSession as jest.Mock).mockResolvedValue(null);
       await expect(
         updatePlan("p1", { name: "Basic", price: 10, devicesLimit: 1 })
+      ).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if user is not admin for updatePlan", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue({
+        user: { id: "user_1", role: "user" },
+      });
+      await expect(
+        updatePlan("p1", { name: "Basic", price: 10, devicesLimit: 1 })
       ).rejects.toThrow("Not authorized");
     });
 
     it("should throw error if session is missing for deletePlan", async () => {
       (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(deletePlan("p1")).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if user is not admin for deletePlan", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue({
+        user: { id: "user_1", role: "user" },
+      });
       await expect(deletePlan("p1")).rejects.toThrow("Not authorized");
     });
 
     it("should throw error if session is missing for getPlans", async () => {
       (auth.api.getSession as jest.Mock).mockResolvedValue(null);
-      await expect(getPlans()).rejects.toThrow("Not authorized");
+      await expect(getPlans()).rejects.toThrow("Not authenticated");
     });
   });
 
   describe("authorized actions", () => {
     beforeEach(() => {
       (auth.api.getSession as jest.Mock).mockResolvedValue({
-        user: { id: "admin_1" },
+        user: { id: "admin_1", role: "admin" },
       });
     });
 

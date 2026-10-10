@@ -1,4 +1,4 @@
-import { createCampaign, deleteCampaign } from "@/actions/campaign";
+import { createCampaign, deleteCampaign, updateCampaign } from "@/actions/campaign";
 import { prisma, MessageType } from "@repo/db";
 import { auth } from "@/lib/auth";
 import { MessageService } from "@/lib/messageService";
@@ -8,8 +8,13 @@ jest.mock("@repo/db", () => ({
     campaign: {
       create: jest.fn(),
       delete: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
     },
     contactGroup: {
+      findFirst: jest.fn(),
+    },
+    device: {
       findFirst: jest.fn(),
     },
     blast: {
@@ -55,6 +60,11 @@ describe("campaign actions", () => {
     (auth.api.getSession as jest.Mock).mockResolvedValue({
       user: { id: "user_1" },
     });
+    (prisma.device.findFirst as jest.Mock).mockResolvedValue({
+      id: "dev_1",
+      body: "+919999999999",
+      userId: "user_1",
+    });
   });
 
   afterEach(() => {
@@ -62,6 +72,45 @@ describe("campaign actions", () => {
   });
 
   describe("createCampaign", () => {
+    it("should throw error if not authenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(
+        createCampaign({
+          name: "Test",
+          sender: "+919999999999",
+          message: "Hi",
+          contactGroupId: "g1",
+          isButtonCampaign: false,
+        })
+      ).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if sender device not owned by user", async () => {
+      (prisma.device.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(
+        createCampaign({
+          name: "Test",
+          sender: "+919999999999",
+          message: "Hi",
+          contactGroupId: "g1",
+          isButtonCampaign: false,
+        })
+      ).rejects.toThrow("Sender device not found or unauthorized.");
+    });
+
+    it("should throw error if contact group not owned by user", async () => {
+      (prisma.contactGroup.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(
+        createCampaign({
+          name: "Test",
+          sender: "+919999999999",
+          message: "Hi",
+          contactGroupId: "g1",
+          isButtonCampaign: false,
+        })
+      ).rejects.toThrow("Contact group not found or unauthorized.");
+    });
+
     it("should create text campaign and queue blasts", async () => {
       (prisma.campaign.create as jest.Mock).mockResolvedValue({
         id: "camp_1",
@@ -156,10 +205,69 @@ describe("campaign actions", () => {
   });
 
   describe("deleteCampaign", () => {
-    it("should delete campaign", async () => {
+    it("should throw error if not authenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(deleteCampaign("camp_1")).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if campaign not found for user", async () => {
+      (prisma.campaign.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(deleteCampaign("camp_1")).rejects.toThrow("Campaign not found");
+    });
+
+    it("should delete campaign when owned by user", async () => {
+      (prisma.campaign.findFirst as jest.Mock).mockResolvedValue({ id: "camp_1", userId: "user_1" });
       await deleteCampaign("camp_1");
       expect(prisma.campaign.delete).toHaveBeenCalledWith({
         where: { id: "camp_1" },
+      });
+    });
+  });
+
+  describe("updateCampaign", () => {
+    it("should throw error if not authenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(
+        updateCampaign("camp_1", {
+          name: "Updated",
+          sender: "+919999999999",
+          message: "New message",
+          contactGroupId: "g1",
+          isButtonCampaign: false,
+        })
+      ).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if campaign not found for user", async () => {
+      (prisma.campaign.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(
+        updateCampaign("camp_1", {
+          name: "Updated",
+          sender: "+919999999999",
+          message: "New message",
+          contactGroupId: "g1",
+          isButtonCampaign: false,
+        })
+      ).rejects.toThrow("Campaign not found");
+    });
+
+    it("should update campaign when valid", async () => {
+      (prisma.campaign.findFirst as jest.Mock).mockResolvedValue({ id: "camp_1", userId: "user_1" });
+      await updateCampaign("camp_1", {
+        name: "Updated",
+        sender: "+919999999999",
+        message: "New message",
+        contactGroupId: "g1",
+        isButtonCampaign: false,
+      });
+
+      expect(prisma.campaign.update).toHaveBeenCalledWith({
+        where: { id: "camp_1" },
+        data: {
+          name: "Updated",
+          senderNumber: "+919999999999",
+          message: "New message",
+        },
       });
     });
   });

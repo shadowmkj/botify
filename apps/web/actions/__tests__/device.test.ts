@@ -30,6 +30,7 @@ jest.mock("@/lib/auth", () => ({
 jest.mock("bullmq", () => ({
   Queue: jest.fn().mockImplementation(() => ({
     add: jest.fn().mockResolvedValue(true),
+    close: jest.fn().mockResolvedValue(undefined),
   })),
 }));
 
@@ -153,7 +154,23 @@ describe("device actions", () => {
   });
 
   describe("logoutDevice", () => {
-    it("should queue logout job", async () => {
+    it("should throw error when unauthenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(logoutDevice("dev_1")).rejects.toThrow("User not authenticated");
+    });
+
+    it("should throw error when device not found for user", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue({
+        user: { id: "user_1" },
+      });
+      (prisma.device.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(logoutDevice("dev_1")).rejects.toThrow("Device not found");
+    });
+
+    it("should queue logout job when device owned by user", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue({
+        user: { id: "user_1" },
+      });
       (prisma.device.findFirst as jest.Mock).mockResolvedValue({
         id: "dev_1",
         body: "+919999999999",

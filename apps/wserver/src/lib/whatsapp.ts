@@ -12,6 +12,62 @@ import { wrapWithSessionStability, LidResolver } from 'baileys-antiban';
 const startingPromises = new Map<string, Promise<WASocket>>();
 const resolver = new LidResolver({ canonical: 'pn' });
 
+export const MAX_RECONNECT_RETRIES = 5;
+export const INITIAL_RECONNECT_DELAY_MS = 1000;
+
+export const reconnectAttempts = new Map<string, number>();
+export const reconnectTimeouts = new Map<string, NodeJS.Timeout>();
+
+export function clearReconnectState(number: string) {
+    reconnectAttempts.delete(number);
+    const timeout = reconnectTimeouts.get(number);
+    if (timeout) {
+        clearTimeout(timeout);
+        reconnectTimeouts.delete(number);
+    }
+}
+
+export function scheduleReconnect(number: string, isRestartRequired: boolean = false) {
+    const existingTimeout = reconnectTimeouts.get(number);
+    if (existingTimeout) {
+        clearTimeout(existingTimeout);
+        reconnectTimeouts.delete(number);
+    }
+
+    const currentAttempts = reconnectAttempts.get(number) || 0;
+    if (currentAttempts >= MAX_RECONNECT_RETRIES) {
+        logger.error(`Max reconnect attempts (${MAX_RECONNECT_RETRIES}) reached for ${number}. Marking as disconnected.`);
+        clearReconnectState(number);
+        updateDeviceStatus(number, "Disconnected").catch(err => {
+            logger.error(`Failed to update device status on max retries: ${err}`);
+        });
+        redis.publish(`qr:${number}`, JSON.stringify({
+            event: "DISCONNECTED",
+            error: "Max reconnect attempts reached"
+        })).catch(err => {
+            logger.error(`Failed to publish disconnect event: ${err}`);
+        });
+        return;
+    }
+
+    const nextAttempt = currentAttempts + 1;
+    reconnectAttempts.set(number, nextAttempt);
+
+    const delay = isRestartRequired ? 0 : INITIAL_RECONNECT_DELAY_MS * Math.pow(2, nextAttempt - 1);
+    logger.info(`Scheduling reconnect for ${number} (attempt ${nextAttempt}/${MAX_RECONNECT_RETRIES}) in ${delay}ms`);
+
+    const timeout = setTimeout(() => {
+        reconnectTimeouts.delete(number);
+        startWhatsAppSession(number, true).catch(err => {
+            logger.error(`Failed to reconnect: ${number}\n Error: ${err}`);
+        });
+    }, delay);
+
+    if (timeout.unref) {
+        timeout.unref();
+    }
+    reconnectTimeouts.set(number, timeout);
+}
 
 export async function startWhatsAppSession(
     number: string,
@@ -109,6 +165,7 @@ export async function startWhatsAppSession(
                             // User explicitly logged out — wipe auth and notify frontend
                             logger.info(`Session for ${number} logged out. Cleaning up session data.`);
                             sessions.delete(number);
+                            clearReconnectState(number);
                             await Promise.all([
                                 deleteSessionFromRedis(redis, `${number}`),
                                 updateDeviceStatus(number, "Disconnected"),
@@ -121,26 +178,24 @@ export async function startWhatsAppSession(
                             // Auth state is still valid — do NOT delete from Redis
                             logger.info(`Connection replaced for ${number}. Auth state preserved.`);
                             sessions.delete(number);
+                            clearReconnectState(number);
                             await updateDeviceStatus(number, "Disconnected");
                         }
                         else if (statusCode === DisconnectReason.restartRequired) {
                             logger.info(`Restart required for session ${number}`);
                             sessions.delete(number);
-                            startWhatsAppSession(number).catch(err => {
-                                logger.error(`Failed to restart: ${number}\n Error: ${err}`)
-                            });
+                            scheduleReconnect(number, true);
                         }
                         else {
-                            // Any other close reason — reconnect using existing auth
+                            // Any other close reason — reconnect using exponential backoff
                             logger.info(`Reconnecting session ${number}...`);
                             sessions.delete(number);
-                            startWhatsAppSession(number, true).catch(err => {
-                                logger.error(`Failed to reconnect: ${number}\n Error: ${err}`)
-                            });
+                            scheduleReconnect(number, false);
                         }
                         break;
 
                     case 'open':
+                        clearReconnectState(number);
                         let profile = "https://avatar.iran.liara.run/public/40"
                         try {
                             profile = await sock.profilePictureUrl(sock.user?.id!) || profile
@@ -196,6 +251,12 @@ export function gracefulShutdown() {
         }
     }
     sessions.clear();
+
+    for (const timeout of reconnectTimeouts.values()) {
+        clearTimeout(timeout);
+    }
+    reconnectTimeouts.clear();
+    reconnectAttempts.clear();
 }
 
 // Register shutdown handlers
