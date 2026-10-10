@@ -10,6 +10,7 @@ jest.mock("@repo/db", () => ({
     autoreply: {
       create: jest.fn(),
       delete: jest.fn(),
+      findFirst: jest.fn(),
     },
   },
 }));
@@ -37,42 +38,68 @@ describe("autoreply actions", () => {
     jest.clearAllMocks();
   });
 
-  it("should throw error if device not found when adding autoreply", async () => {
-    (prisma.device.findFirst as jest.Mock).mockResolvedValue(null);
+  describe("addAutoreply", () => {
+    it("should throw error if unauthenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(
+        addAutoreply({
+          keyword: "help",
+          reply: "How can I help you?",
+          deviceNumber: "+919999999999",
+        })
+      ).rejects.toThrow("Not authenticated");
+    });
 
-    await expect(
-      addAutoreply({
+    it("should throw error if device not found when adding autoreply", async () => {
+      (prisma.device.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(
+        addAutoreply({
+          keyword: "help",
+          reply: "How can I help you?",
+          deviceNumber: "+919999999999",
+        })
+      ).rejects.toThrow("Device not found");
+    });
+
+    it("should create autoreply for valid device", async () => {
+      (prisma.device.findFirst as jest.Mock).mockResolvedValue({
+        id: "dev_1",
+      });
+
+      await addAutoreply({
         keyword: "help",
         reply: "How can I help you?",
         deviceNumber: "+919999999999",
-      })
-    ).rejects.toThrow("Device not found");
-  });
+      });
 
-  it("should create autoreply for valid device", async () => {
-    (prisma.device.findFirst as jest.Mock).mockResolvedValue({
-      id: "dev_1",
-    });
-
-    await addAutoreply({
-      keyword: "help",
-      reply: "How can I help you?",
-      deviceNumber: "+919999999999",
-    });
-
-    expect(prisma.autoreply.create).toHaveBeenCalledWith({
-      data: {
-        keyword: "help",
-        reply: "How can I help you?",
-        deviceId: "dev_1",
-      },
+      expect(prisma.autoreply.create).toHaveBeenCalledWith({
+        data: {
+          keyword: "help",
+          reply: "How can I help you?",
+          deviceId: "dev_1",
+        },
+      });
     });
   });
 
-  it("should delete autoreply by id", async () => {
-    await deleteAutoreply({ id: "ar_1" });
-    expect(prisma.autoreply.delete).toHaveBeenCalledWith({
-      where: { id: "ar_1" },
+  describe("deleteAutoreply", () => {
+    it("should throw error if unauthenticated", async () => {
+      (auth.api.getSession as jest.Mock).mockResolvedValue(null);
+      await expect(deleteAutoreply({ id: "ar_1" })).rejects.toThrow("Not authenticated");
+    });
+
+    it("should throw error if autoreply not found for user's device", async () => {
+      (prisma.autoreply.findFirst as jest.Mock).mockResolvedValue(null);
+      await expect(deleteAutoreply({ id: "ar_1" })).rejects.toThrow("Autoreply not found");
+    });
+
+    it("should delete autoreply by id when authorized", async () => {
+      (prisma.autoreply.findFirst as jest.Mock).mockResolvedValue({ id: "ar_1" });
+      await deleteAutoreply({ id: "ar_1" });
+      expect(prisma.autoreply.delete).toHaveBeenCalledWith({
+        where: { id: "ar_1" },
+      });
     });
   });
 });

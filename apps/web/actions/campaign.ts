@@ -12,8 +12,17 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
   const session = await auth.api.getSession({
     headers: await headers()
   })
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated")
+  }
 
-  // Determine campaign type
+  const device = await prisma.device.findFirst({
+    where: { body: values.sender, userId: session.user.id }
+  })
+  if (!device) {
+    throw new Error("Sender device not found or unauthorized.")
+  }
+
   let campaignType: MessageType = MessageType.Text;
 
   if (values.isButtonCampaign) {
@@ -42,7 +51,6 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     }
   }
 
-  // Parse button payload if provided
   let buttonPayload: object | undefined = undefined;
   if (values.isButtonCampaign && values.buttonPayloadJson) {
     try {
@@ -52,11 +60,19 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     }
   }
 
+  const group = await prisma.contactGroup.findFirst({
+    where: { id: values.contactGroupId, userId: session.user.id },
+    include: { contacts: true }
+  })
+  if (!group) {
+    throw new Error("Contact group not found or unauthorized.")
+  }
+
   const data = await prisma.campaign.create({
     data: {
       name: values.name,
       senderNumber: values.sender,
-      userId: session?.user?.id!,
+      userId: session.user.id,
       campaignType: campaignType,
       message: values.isButtonCampaign ? null : (values.message || null),
       media: values.media || null,
@@ -65,13 +81,7 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
     }
   })
 
-  const group = await prisma.contactGroup.findFirst({
-    where: { id: values.contactGroupId },
-    include: { contacts: true }
-  })
-
-  // Create blast records — Button campaigns use MessageType.Button
-  await Promise.all(group?.contacts.map(async (contact) => {
+  await Promise.all(group.contacts.map(async (contact) => {
     await prisma.blast.create({
       data: {
         type: "Campaign",
@@ -80,10 +90,10 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
         contactId: contact.id
       }
     })
-  }) || [])
+  }))
 
   try {
-    const svc = new MessageService(values.sender, session?.user?.id!)
+    const svc = new MessageService(values.sender, session.user.id)
     if (values.isButtonCampaign && values.buttonPayloadJson) {
       await svc.queueButtonCampaign(data.id, values.buttonPayloadJson)
     } else {
@@ -98,6 +108,20 @@ export const createCampaign = async (values: z.infer<typeof createCampaignSchema
 }
 
 export const deleteCampaign = async (id: string) => {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated")
+  }
+
+  const campaign = await prisma.campaign.findFirst({
+    where: { id, userId: session.user.id }
+  })
+  if (!campaign) {
+    throw new Error("Campaign not found")
+  }
+
   await prisma.campaign.delete({
     where: { id }
   })
@@ -105,6 +129,29 @@ export const deleteCampaign = async (id: string) => {
 }
 
 export const updateCampaign = async (id: string, values: z.infer<typeof createCampaignSchema>) => {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+  if (!session?.user?.id) {
+    throw new Error("Not authenticated")
+  }
+
+  const campaign = await prisma.campaign.findFirst({
+    where: { id, userId: session.user.id }
+  })
+  if (!campaign) {
+    throw new Error("Campaign not found")
+  }
+
+  if (values.sender) {
+    const device = await prisma.device.findFirst({
+      where: { body: values.sender, userId: session.user.id }
+    })
+    if (!device) {
+      throw new Error("Sender device not found or unauthorized.")
+    }
+  }
+
   await prisma.campaign.update({
     where: { id },
     data: {
