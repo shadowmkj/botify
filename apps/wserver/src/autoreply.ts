@@ -5,6 +5,17 @@ import { QUEUE_NAME } from "./utils/constants";
 import { WhatsappJob } from "@repo/types";
 import { prisma } from "@repo/db";
 
+let whatsappQueue: Queue<WhatsappJob> | null = null;
+
+export function getWhatsappQueue(): Queue<WhatsappJob> {
+  if (!whatsappQueue) {
+    whatsappQueue = new Queue<WhatsappJob>(QUEUE_NAME, {
+      connection: redis,
+    });
+  }
+  return whatsappQueue;
+}
+
 const initAutoreply = async (upsert: IUpsert, number: string) => {
   const autoreplies = (
     await prisma.device.findMany({
@@ -12,92 +23,39 @@ const initAutoreply = async (upsert: IUpsert, number: string) => {
       include: { autoreplies: true },
     })
   ).flatMap((device: any) => device.autoreplies);
-  const queue = new Queue<WhatsappJob>(QUEUE_NAME, {
-    connection: redis,
-  });
 
-  autoreplies.map((autoreply: any) => {
-    upsert.messages.map(async (message) => {
-      if (
-        (
-          message.message?.extendedTextMessage?.text ??
-          message.message?.conversation
-        )
-          ?.trim()
-          .toLowerCase() == autoreply.keyword.trim().toLowerCase() &&
-        !message.key.fromMe
-      ) {
-        console.log(
-          message.message?.extendedTextMessage?.text ??
-            message.message?.conversation,
-          autoreply.keyword
-        );
-        // const msg: IMessage = JSON.parse(autoreply.reply);
+  if (!autoreplies.length) return;
+
+  for (const message of upsert.messages) {
+    const jid = message.key.remoteJid;
+    if (!jid || message.key.fromMe || jid.endsWith('@g.us') || jid.endsWith('@broadcast')) {
+      continue;
+    }
+
+    const rawRecipient = jid.replace(/@s\.whatsapp\.net$/, '').replace(/@c\.us$/, '').split(':')[0];
+    if (!rawRecipient) continue;
+
+    const receiver = rawRecipient.startsWith('+') ? rawRecipient : `+${rawRecipient}`;
+    const text = (
+      message.message?.extendedTextMessage?.text ??
+      message.message?.conversation
+    )?.trim().toLowerCase();
+
+    if (!text) continue;
+
+    for (const autoreply of autoreplies) {
+      if (text === autoreply.keyword.trim().toLowerCase()) {
+        const queue = getWhatsappQueue();
         await queue.add("send-message", {
           type: "send-message",
           sender: number,
-          receiver: message.key.remoteJid ?? "",
+          receiver,
           message: autoreply.reply,
           noDelay: true,
         });
       }
-    });
-  });
+    }
+  }
 };
 
-// export const initTest = async (upsert: IUpsert, number: string) => {
-//   const client = clients.get(number);
-//   if (!client) {
-//     console.error(`No client found for number: ${number}`);
-//     return;
-//   }
-//   upsert.messages.map(async (message) => {
-//     if (message.message?.imageMessage?.url?.length && !message.key.fromMe) {
-//       // Check if message is to a group
-//       if (message.key.remoteJid?.endsWith("@g.us")) {
-//         return
-//       }
-//       console.log("Image message received:", message.message.imageMessage.url);
-//       try {
-//         const buffer = await downloadMediaMessage(
-//           message,
-//           "buffer",
-//           {},
-//           { logger: log, reuploadRequest: client.updateMediaMessage }
-//         );
-//         const form = new FormData();
-//
-//         form.append("file", buffer, {
-//           filename: "image.jpg",
-//           contentType: "image/jpeg",
-//         });
-//         // const res = await fetch("https://gm.milanpramod.online/predict", {
-//         //   method: "POST",
-//         //   headers: form.getHeaders(),
-//         //   body: form,
-//         // });
-//         const res = await axios.post(
-//           "https://gm.milanpramod.online/predict",
-//           form,
-//           {
-//             headers: form.getHeaders(),
-//           }
-//         );
-//         const data = await res.data
-//         console.log("Prediction result:", data.result, data.confidence);
-//         if (data?.result) {
-//           sendBlast(
-//             client,
-//             message.key.remoteJid ?? "",
-//             JSON.stringify({ text: generateGoodMorningMessage() }),
-//             "text"
-//           );
-//         }
-//       } catch (error) {
-//         console.error("Error fetching prediction:", error);
-//       }
-//     }
-//   });
-// };
-//
 export default initAutoreply;

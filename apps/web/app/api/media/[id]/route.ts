@@ -24,17 +24,17 @@ async function findStoredName(id: string): Promise<string | null> {
   }
 }
 
-export async function GET(req: Request, arg: unknown) {
-  const { params } = arg as { params: { id: string } };
-  const id = params.id;
+export async function GET(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
+  if (!id) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const dir = getStorageDir();
   const storedName = await findStoredName(id);
   if (!storedName) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const filePath = path.join(dir, storedName);
   try {
     await fs.access(filePath);
-    const reqUrl = new URL(req.url)
-    return NextResponse.redirect(`${reqUrl.origin}/media/${storedName}`, 302)
+    const reqUrl = new URL(req.url);
+    return NextResponse.redirect(`${reqUrl.origin}/media/${storedName}`, 302);
   } catch (err: unknown) {
     const code = (err as NodeJS.ErrnoException | undefined)?.code;
     console.error("Media file access error", { id, filePath, code });
@@ -42,11 +42,11 @@ export async function GET(req: Request, arg: unknown) {
   }
 }
 
-export async function HEAD(req: Request, arg: unknown) {
-  const { params } = arg as { params: { id: string } };
-  const id = params.id;
+export async function HEAD(req: Request, props: { params: Promise<{ id: string }> }) {
+  const { id } = await props.params;
+  if (!id) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const storedName = await findStoredName(id);
   if (!storedName) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const reqUrl = new URL(req.url)
-  return NextResponse.redirect(`${reqUrl.origin}/media/${storedName}`, 302)
+  const reqUrl = new URL(req.url);
+  return NextResponse.redirect(`${reqUrl.origin}/media/${storedName}`, 302);
 }

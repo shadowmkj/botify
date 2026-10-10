@@ -89,5 +89,27 @@ describe('wserver redis-auth', () => {
         expect.arrayContaining(['sess_123:creds.json', 'sess_123:pre-key-1.json'])
       );
     });
+
+    it('should paginate across multiple scan cursor iterations to delete all keys', async () => {
+      let callCount = 0;
+      mockRedis.scan = jest.fn(async (cursor: string) => {
+        callCount++;
+        if (cursor === '0' && callCount === 1) {
+          return ['42', ['sess_123:batch1-key1', 'sess_123:batch1-key2']];
+        }
+        return ['0', ['sess_123:batch2-key1']];
+      });
+
+      await deleteSessionFromRedis(mockRedis as any, 'sess_123');
+
+      expect(mockRedis.scan).toHaveBeenCalledTimes(2);
+      expect(mockRedis.scan).toHaveBeenNthCalledWith(1, '0', 'MATCH', 'sess_123:*', 'COUNT', 1000);
+      expect(mockRedis.scan).toHaveBeenNthCalledWith(2, '42', 'MATCH', 'sess_123:*', 'COUNT', 1000);
+      expect(mockRedis.del).toHaveBeenCalledWith([
+        'sess_123:batch1-key1',
+        'sess_123:batch1-key2',
+        'sess_123:batch2-key1',
+      ]);
+    });
   });
 });
