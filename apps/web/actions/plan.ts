@@ -8,11 +8,16 @@ import { auth } from "@/lib/auth";
 import { planSchema } from "@/app/(admin)/plans/new/planSchema";
 import { randomUUID } from "crypto";
 
-export const createPlan = async (values: z.infer<typeof planSchema>) => {
+async function requireAdmin() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Not authorized");
-  }
+  if (!session) throw new Error("Not authenticated");
+  const role = (session.user as unknown as { role?: string })?.role;
+  if (role !== "admin") throw new Error("Not authorized");
+  return session;
+}
+
+export const createPlan = async (values: z.infer<typeof planSchema>) => {
+  await requireAdmin();
 
   await prisma.plan.create({
     data: {
@@ -31,10 +36,7 @@ export const createPlan = async (values: z.infer<typeof planSchema>) => {
 };
 
 export const updatePlan = async (id: string, values: z.infer<typeof planSchema>) => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Not authorized");
-  }
+  await requireAdmin();
 
   await prisma.plan.update({
     where: { id },
@@ -52,10 +54,7 @@ export const updatePlan = async (id: string, values: z.infer<typeof planSchema>)
 };
 
 export const deletePlan = async (id: string) => {
-  const session = await auth.api.getSession({ headers: await headers() });
-  if (!session?.user?.id) {
-    throw new Error("Not authorized");
-  }
+  await requireAdmin();
 
   await prisma.plan.delete({ where: { id } });
   revalidatePath("/plans");
@@ -64,7 +63,7 @@ export const deletePlan = async (id: string) => {
 export const getPlans = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) {
-    throw new Error("Not authorized");
+    throw new Error("Not authenticated");
   }
   return prisma.plan.findMany({
     orderBy: { createdAt: "desc" },
