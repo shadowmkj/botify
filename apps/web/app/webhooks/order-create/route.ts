@@ -68,8 +68,6 @@ export async function POST(request: Request) {
             content = parseTemplate(user.shopifyTemplate.content, body)
         }
 
-        // Extract customer phone dynamically from Shopify order payload.
-        // Fallback default: "+917902708908" (Note: dynamic merchant number configuration is pending completion)
         const DEFAULT_ORDER_PHONE = "+917902708908";
         const extractedPhone = body.shipping_address?.phone || body.customer?.phone || body.billing_address?.phone || body.phone;
         const targetPhone = extractedPhone ? String(extractedPhone).trim() : DEFAULT_ORDER_PHONE;

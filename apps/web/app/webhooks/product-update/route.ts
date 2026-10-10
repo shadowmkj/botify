@@ -53,7 +53,6 @@ export async function POST(request: Request) {
         if (isValid) {
             const svc = new MessageService(user.Device[0].body, user.id)
             const content = `${body.title || "Product"} has been updated`
-            // Fallback default notification phone number (Note: dynamic notification destination configuration is pending completion)
             const DEFAULT_NOTIFICATION_PHONE = "+917012749946";
             const targetPhone = DEFAULT_NOTIFICATION_PHONE;
             await svc.queueSendMessage(targetPhone, content)

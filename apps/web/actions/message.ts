@@ -66,8 +66,6 @@ export const sendMessage = async (data: Props) => {
   }
 }
 
-// ─── Button Message ───────────────────────────────────────────────────────────
-
 const sendButtonZSchema = z.object({
   receiver: phoneNumberSchema,
   sender: phoneNumberSchema,

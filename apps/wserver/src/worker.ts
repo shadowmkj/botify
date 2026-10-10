@@ -126,7 +126,6 @@ new Worker<WhatsappJob>(
                                 messageObject.fileName = fileName || inferred.name || `${Date.now()}`;
                             }
 
-                            // Generate the media portion of the WAMessage using WhiskeySockets
                             mediaMsg = await generateWAMessageContent(messageObject, { upload: sock.waUploadToServer });
                         }
 
@@ -144,7 +143,7 @@ new Worker<WhatsappJob>(
                             content.interactiveMessage.header = {
                                 title: title || undefined,
                                 hasMediaAttachment: !!mediaMsg,
-                                ...(mediaMsg || {}) // Injects imageMessage, documentMessage, etc.
+                                ...(mediaMsg || {})
                             };
                         }
 
@@ -185,7 +184,7 @@ new Worker<WhatsappJob>(
                             `Sending message to ${receiver} from session ${validatedSender}`,
                         );
                         if (!noDelay) {
-                            const randomDelay = Math.floor(Math.random() * 2000) + 2000; // Random delay between 500ms and 1500ms
+                            const randomDelay = Math.floor(Math.random() * 2000) + 2000;
                             await sleep(randomDelay);
                         }
                         const result = await sock.onWhatsApp(receiver);
@@ -229,7 +228,6 @@ new Worker<WhatsappJob>(
                                     messageObject,
                                 );
                             } else {
-                                // Treat media as URL (preferred flow)
                                 const inferred = mediaType
                                     ? {
                                         kind: mediaType as 'image' | 'video' | 'document',
@@ -295,7 +293,7 @@ new Worker<WhatsappJob>(
                                 },
                             });
                         }
-                        throw error; // Fail the job so it can be retried
+                        throw error;
                     }
                 } else {
                     //TODO:: Handle case where session is not found (Message not sent)

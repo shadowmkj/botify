@@ -18,11 +18,15 @@ const mockTo = jest.fn(() => ({ emit: mockToEmit }));
 
 const socketEventHandlers: Record<string, Function> = {};
 const ioEventHandlers: Record<string, Function> = {};
+let ioMiddleware: Function = () => {};
 const subscriberEventHandlers: Record<string, Function> = {};
 
 jest.mock('socket.io', () => {
   return {
     Server: jest.fn().mockImplementation(() => ({
+      use: jest.fn((middleware: Function) => {
+        ioMiddleware = middleware;
+      }),
       on: jest.fn((event: string, cb: Function) => {
         ioEventHandlers[event] = cb;
       }),
@@ -47,6 +51,9 @@ jest.mock('@repo/db', () => ({
     device: {
       findFirst: jest.fn(),
     },
+    session: {
+      findUnique: jest.fn(),
+    },
   },
 }));
 
@@ -61,14 +68,28 @@ jest.mock('bullmq', () => ({
 
 describe('Socket Server', () => {
   let mockSocket: any;
+  let serverModule: any;
 
   beforeAll(() => {
-    require('../server');
+    serverModule = require('../server');
   });
 
   beforeEach(() => {
+    mockSocketEmit.mockClear();
+    mockSocketJoin.mockClear();
+    mockToEmit.mockClear();
+    mockTo.mockClear();
+    mockQueueGetJob.mockClear();
+    mockQueueAdd.mockClear();
+    (prisma.device.findFirst as jest.Mock).mockReset();
+    (prisma.session.findUnique as jest.Mock).mockReset();
     mockSocket = {
       id: 'socket_123',
+      userId: 'user_123',
+      handshake: {
+        auth: {},
+        headers: {},
+      },
       join: mockSocketJoin,
       emit: mockSocketEmit,
       on: jest.fn((event: string, cb: Function) => {
@@ -82,6 +103,83 @@ describe('Socket Server', () => {
     expect(Server).toHaveBeenCalled();
   });
 
+  describe('extractSessionToken and Auth Middleware', () => {
+    it('should extract token from auth object', () => {
+      const socket = {
+        handshake: { auth: { token: 'auth_token_123' }, headers: {} },
+      } as any;
+      expect(serverModule.extractSessionToken(socket)).toBe('auth_token_123');
+    });
+
+    it('should extract token from Authorization header', () => {
+      const socket = {
+        handshake: { auth: {}, headers: { authorization: 'Bearer header_token_123' } },
+      } as any;
+      expect(serverModule.extractSessionToken(socket)).toBe('header_token_123');
+    });
+
+    it('should extract token from cookie header', () => {
+      const socket = {
+        handshake: {
+          auth: {},
+          headers: { cookie: 'other=123; better-auth.session_token=cookie_token_123; foo=bar' },
+        },
+      } as any;
+      expect(serverModule.extractSessionToken(socket)).toBe('cookie_token_123');
+    });
+
+    it('should return null when no token is present', () => {
+      const socket = {
+        handshake: { auth: {}, headers: {} },
+      } as any;
+      expect(serverModule.extractSessionToken(socket)).toBeNull();
+    });
+
+    it('should reject connection when token is missing', async () => {
+      const next = jest.fn();
+      const socket = {
+        handshake: { auth: {}, headers: {} },
+      } as any;
+
+      await ioMiddleware(socket, next);
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toMatch(/Missing session token/);
+    });
+
+    it('should reject connection when session is expired or not found', async () => {
+      const next = jest.fn();
+      const socket = {
+        handshake: { auth: { token: 'invalid_token' }, headers: {} },
+      } as any;
+
+      (prisma.session.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await ioMiddleware(socket, next);
+      expect(next).toHaveBeenCalledWith(expect.any(Error));
+      expect(next.mock.calls[0][0].message).toMatch(/Invalid or expired session/);
+    });
+
+    it('should authenticate socket and attach userId when session is valid', async () => {
+      const next = jest.fn();
+      const socket = {
+        handshake: { auth: { token: 'valid_token.signature' }, headers: {} },
+      } as any;
+
+      (prisma.session.findUnique as jest.Mock).mockResolvedValue({
+        id: 'sess_db_1',
+        token: 'valid_token',
+        userId: 'user_456',
+        expiresAt: new Date(Date.now() + 100000),
+        user: { id: 'user_456', email: 'test@example.com' },
+      });
+
+      await ioMiddleware(socket, next);
+      expect(next).toHaveBeenCalledWith();
+      expect(socket.userId).toBe('user_456');
+      expect(socket.user).toBeDefined();
+    });
+  });
+
   it('should forward redis subscriber messages to socket rooms', () => {
     expect(subscriberEventHandlers['message']).toBeDefined();
     subscriberEventHandlers['message']('qr:919999999999', JSON.stringify({ event: 'QR' }));
@@ -89,14 +187,28 @@ describe('Socket Server', () => {
     expect(mockToEmit).toHaveBeenCalledWith('qr-update', JSON.stringify({ event: 'QR' }));
   });
 
-  it('should handle client connection and subscribe-to-qr when device not found', async () => {
+  it('should reject subscribe-to-qr when socket has no userId', async () => {
+    ioEventHandlers['connection'](mockSocket);
+    mockSocket.userId = undefined;
+
+    await socketEventHandlers['subscribe-to-qr']({ sessionId: 'device_123' });
+    expect(mockSocketEmit).toHaveBeenCalledWith(
+      'qr-update',
+      JSON.stringify({ event: 'LOGOUT', error: 'Unauthorized' })
+    );
+  });
+
+  it('should handle client connection and subscribe-to-qr when device not found or unauthorized', async () => {
     ioEventHandlers['connection'](mockSocket);
     (prisma.device.findFirst as jest.Mock).mockResolvedValue(null);
 
     await socketEventHandlers['subscribe-to-qr']({ sessionId: 'invalid_session' });
+    expect(prisma.device.findFirst).toHaveBeenCalledWith({
+      where: { id: 'invalid_session', userId: 'user_123' },
+    });
     expect(mockSocketEmit).toHaveBeenCalledWith(
       'qr-update',
-      JSON.stringify({ event: 'LOGOUT', error: 'Device not found' })
+      JSON.stringify({ event: 'LOGOUT', error: 'Device not found or unauthorized' })
     );
   });
 
@@ -105,6 +217,7 @@ describe('Socket Server', () => {
     (prisma.device.findFirst as jest.Mock).mockResolvedValue({
       id: 'sess_1',
       body: '919999999999',
+      userId: 'user_123',
     });
     mockQueueGetJob.mockResolvedValue(null);
 
@@ -124,6 +237,7 @@ describe('Socket Server', () => {
     (prisma.device.findFirst as jest.Mock).mockResolvedValue({
       id: 'sess_1',
       body: '919999999999',
+      userId: 'user_123',
     });
     mockQueueGetJob.mockResolvedValue({
       isCompleted: jest.fn().mockResolvedValue(false),
@@ -150,6 +264,7 @@ describe('Socket Server', () => {
     (prisma.device.findFirst as jest.Mock).mockResolvedValue({
       id: 'sess_dc',
       body: '918888888888',
+      userId: 'user_123',
     });
     mockQueueGetJob.mockResolvedValue(null);
 

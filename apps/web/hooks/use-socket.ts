@@ -60,11 +60,11 @@ const useSocket = (sessionId: string) => {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     useEffect(() => {
-        // Create socket connection with proper configuration
         const socketUrl =
             process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
 
         const socket = io(socketUrl, {
+            withCredentials: true,
             reconnection: true,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000,
@@ -74,10 +74,8 @@ const useSocket = (sessionId: string) => {
 
         dispatch({ type: "CONNECTING" });
 
-        // Set up event listeners
         socket.on("connect", () => {
             console.log("Socket connected:", socket.id);
-            // Subscribe to QR updates after connection is established
             socket.emit("subscribe-to-qr", { sessionId });
         });
 
@@ -99,7 +97,6 @@ const useSocket = (sessionId: string) => {
             console.error("Socket connection error:", error);
         });
 
-        // Cleanup function - properly disconnect socket
         return () => {
             console.log("Cleaning up socket connection");
             socket.disconnect();
