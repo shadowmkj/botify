@@ -4,10 +4,22 @@ import { prisma } from "@repo/db";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-    const rawBody = Buffer.from(await request.arrayBuffer());
-    const body = JSON.parse(rawBody.toString());
-    console.log(request.headers)
-    console.log(body)
+    let text = "";
+    try {
+        text = await request.text();
+    } catch {
+        return NextResponse.json({ error: "Failed to read request body" }, { status: 400 });
+    }
+
+    const rawBody = Buffer.from(text);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    let body: any;
+    try {
+        body = JSON.parse(text);
+    } catch {
+        return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
     const shopifyDomain = request.headers.get('x-shopify-shop-domain')
     const shopifyKey = request.headers.get('x-shopify-hmac-sha256')
 
@@ -28,22 +40,30 @@ export async function POST(request: Request) {
         })
     }
 
+    if (!user.Device || user.Device.length === 0) {
+        return NextResponse.json({
+            error: "No connected device found for user"
+        }, {
+            status: 400
+        })
+    }
+
     if (shopifyKey && user.shopifyKey) {
         const isValid = verifyHMAC(rawBody, shopifyKey, user.shopifyKey)
-        console.log("VALIDITY: ", isValid, shopifyDomain)
         if (isValid) {
             const svc = new MessageService(user.Device[0].body, user.id)
-            const content = `${body.title} has been updated`
-            await svc.queueSendMessage("+917012749946", content)
+            const content = `${body.title || "Product"} has been updated`
+            // Fallback default notification phone number (Note: dynamic notification destination configuration is pending completion)
+            const DEFAULT_NOTIFICATION_PHONE = "+917012749946";
+            const targetPhone = DEFAULT_NOTIFICATION_PHONE;
+            await svc.queueSendMessage(targetPhone, content)
             return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
         } else {
-            return NextResponse.json({ error: "Invalid shopifyKey" }, { status: 404 })
+            return NextResponse.json({ error: "Invalid shopifyKey" }, { status: 401 })
         }
 
     } else {
-        console.log("VALIDITY: ", false, shopifyDomain)
+        return NextResponse.json({ error: "Missing shopifyKey" }, { status: 400 })
     }
-
-    return NextResponse.json({ error: "Invalid shopifyKey" }, { status: 404 })
 }
 

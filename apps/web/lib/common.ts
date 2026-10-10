@@ -12,15 +12,26 @@ export async function getMessagesSent(userId: string) {
 export const verifyHMAC = (rawBody: Buffer,
     hmacHeader: string,
     secret: string) => {
-    const generatedHash = crypto
-        .createHmac("sha256", secret)
-        .update(rawBody)
-        .digest("base64");
+    try {
+        const generatedHash = crypto
+            .createHmac("sha256", secret)
+            .update(rawBody)
+            .digest("base64");
 
-    return crypto.timingSafeEqual(
-        Buffer.from(generatedHash),
-        Buffer.from(hmacHeader)
-    );
+        const generatedBuf = Buffer.from(generatedHash);
+        const headerBuf = Buffer.from(hmacHeader);
+
+        if (generatedBuf.length !== headerBuf.length) {
+            return false;
+        }
+
+        return crypto.timingSafeEqual(
+            generatedBuf,
+            headerBuf
+        );
+    } catch {
+        return false;
+    }
 }
 
 

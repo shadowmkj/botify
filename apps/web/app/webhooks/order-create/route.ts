@@ -10,13 +10,24 @@ export const config = {
 };
 
 export async function POST(request: Request) {
-    const rawBody = Buffer.from(await request.arrayBuffer());
-    const body = JSON.parse(rawBody.toString());
-    console.log(request.headers)
-    console.log(body)
+    let text = "";
+    try {
+        text = await request.text();
+    } catch {
+        return NextResponse.json({ error: "Failed to read request body" }, { status: 400 });
+    }
+
+    const rawBody = Buffer.from(text);
+    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+    let body: any;
+    try {
+        body = JSON.parse(text);
+    } catch {
+        return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
+
     const shopifyDomain = request.headers.get('x-shopify-shop-domain')
     const shopifyKey = request.headers.get('x-shopify-hmac-sha256')
-    const phone: string | null = body.customer.phone
 
     const user = await prisma.user.findFirst({
         where: {
@@ -36,9 +47,20 @@ export async function POST(request: Request) {
         })
     }
 
+    if (!user.Device || user.Device.length === 0) {
+        return NextResponse.json({
+            error: "No connected device found for user"
+        }, {
+            status: 400
+        })
+    }
+
     if (shopifyKey && user.shopifyKey) {
         const isValid = verifyHMAC(rawBody, shopifyKey, user.shopifyKey)
-        console.log("VALIDITY: ", isValid, shopifyDomain)
+        if (!isValid) {
+            return NextResponse.json({ error: "Invalid HMAC signature" }, { status: 401 })
+        }
+
         const svc = new MessageService(user.Device[0].body, user.id)
         let content = "Hi Thank you for Shopping with us! This is a test message"
         if (user.shopifyTemplate) {
@@ -46,9 +68,11 @@ export async function POST(request: Request) {
             content = parseTemplate(user.shopifyTemplate.content, body)
         }
 
-        console.log("Number: ", body.shipping_address?.phone || phone)
-        // const targetPhone = body.shipping_address?.phone || phone || "+917902708908";
-        const targetPhone = "+917902708908";
+        // Extract customer phone dynamically from Shopify order payload.
+        // Fallback default: "+917902708908" (Note: dynamic merchant number configuration is pending completion)
+        const DEFAULT_ORDER_PHONE = "+917902708908";
+        const extractedPhone = body.shipping_address?.phone || body.customer?.phone || body.billing_address?.phone || body.phone;
+        const targetPhone = extractedPhone ? String(extractedPhone).trim() : DEFAULT_ORDER_PHONE;
         const STATIC_LOGO_URL = user.staticLogoUrl || "https://www.linvecreations.com/cdn/shop/files/linve.png?v=1774507969&width=165";
 
         if (body.order_status_url) {
@@ -76,9 +100,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ message: 'Message queued successfully' }, { status: 200 })
 
     } else {
-        console.log("VALIDITY: ", false, shopifyDomain)
+        return NextResponse.json({ error: "Missing or invalid shopifyKey" }, { status: 400 })
     }
-
-    return NextResponse.json(body)
 }
 
