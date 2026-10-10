@@ -102,6 +102,11 @@ describe("MessageService", () => {
     });
 
     it("should queue button message", async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        plan: { messageLimit: null },
+      });
+
       const res = await service.queueButtonMessage(
         "+918888888888",
         "Hello",
@@ -111,6 +116,29 @@ describe("MessageService", () => {
         []
       );
       expect(res).toBeDefined();
+    });
+
+    it("should throw QUOTA_EXCEEDED when queueButtonMessage exceeds quota", async () => {
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        plan: { messageLimit: 10 },
+      });
+      (prisma.device.findMany as jest.Mock).mockResolvedValue([
+        { messagesSent: 10 },
+      ]);
+
+      await expect(
+        service.queueButtonMessage(
+          "+918888888888",
+          "Hello",
+          "Body text",
+          "Title",
+          "Footer",
+          []
+        )
+      ).rejects.toMatchObject({
+        code: "QUOTA_EXCEEDED",
+      });
     });
 
     it("should queue bulk messages", async () => {
@@ -160,6 +188,10 @@ describe("MessageService", () => {
           { id: "b1", contact: { phone: "+919999999999" } },
         ],
       });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        plan: { messageLimit: null },
+      });
 
       const buttonPayload = JSON.stringify({
         header: "Special Offer",
@@ -174,12 +206,49 @@ describe("MessageService", () => {
       expect(res).toBeDefined();
     });
 
+    it("should throw QUOTA_EXCEEDED when queueButtonCampaign exceeds quota", async () => {
+      (prisma.campaign.findUnique as jest.Mock).mockResolvedValue({
+        id: "camp_btn",
+        media: "https://example.com/image.png",
+        blasts: [
+          { id: "b1", contact: { phone: "+919999999999" } },
+          { id: "b2", contact: { phone: "+919999999998" } },
+        ],
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        plan: { messageLimit: 1 },
+      });
+      (prisma.device.findMany as jest.Mock).mockResolvedValue([
+        { messagesSent: 0 },
+      ]);
+
+      const buttonPayload = JSON.stringify({
+        header: "Special Offer",
+        body: "Get 20% off",
+        footer: "Botify",
+        buttons: [
+          { id: "b1", type: "quick_reply", text: "Claim Now", payload: "CLAIM" },
+        ],
+      });
+
+      await expect(
+        service.queueButtonCampaign("camp_btn", buttonPayload)
+      ).rejects.toMatchObject({
+        code: "QUOTA_EXCEEDED",
+      });
+    });
+
     it("should throw error if button campaign JSON is invalid", async () => {
       (prisma.campaign.findUnique as jest.Mock).mockResolvedValue({
         id: "camp_btn",
         blasts: [
           { id: "b1", contact: { phone: "+919999999999" } },
         ],
+      });
+      (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+        id: userId,
+        plan: { messageLimit: null },
       });
 
       await expect(
