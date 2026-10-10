@@ -1,3 +1,26 @@
 packages:
-  - 'apps/*'
-  - 'packages/*'
+  - apps/*
+  - packages/*
+
+onlyBuiltDependencies:
+  - ','
+  - '-'
+  - '3'
+  - a
+  - b
+  - baileys
+  - d
+  - e
+  - h
+  - i
+  - l
+  - n
+  - o
+  - p
+  - protobufjs
+  - q
+  - r
+  - s
+  - t
+  - u
+  - v

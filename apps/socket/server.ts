@@ -88,8 +88,8 @@ io.on('connection', (socket: Socket) => {
             // Check if job already exists before creating a new one
             const existingJob = await redisQ.getJob(roomId);
             const shouldCreateJob = !existingJob ||
-                                   await existingJob.isCompleted() ||
-                                   await existingJob.isFailed();
+                await existingJob.isCompleted() ||
+                await existingJob.isFailed();
 
             if (shouldCreateJob) {
                 await redisQ.add('connect-whatsapp', {
