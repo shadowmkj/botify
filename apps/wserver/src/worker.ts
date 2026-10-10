@@ -150,11 +150,33 @@ new Worker<WhatsappJob>(
                         const resp = await sendInteractiveMessage(sock, receiverJid, {
                             interactiveMessage: content.interactiveMessage
                         });
+                        if (resp) {
+                            try {
+                                await prisma.device.update({
+                                    data: {
+                                        messagesSent: {
+                                            increment: 1,
+                                        },
+                                    },
+                                    where: {
+                                        body: validatedSender,
+                                    },
+                                });
+                            } catch (err) {
+                                logger.error(`Failed to increment messagesSent for ${validatedSender}: ${err}`);
+                            }
+                        }
                         logger.info(`Interactive message sent with resp: ${resp?.key?.id}`);
                     }
                     catch (error) {
-                        console.log(error)
+                        logger.error(`Failed to send interactive message: ${error}`);
+                        throw error;
                     }
+                } else {
+                    logger.error(`Session ${sender} not found. Cannot send button message.`);
+                    throw new Error(
+                        `Session ${sender} not found. Cannot send button message.`,
+                    );
                 }
 
                 break;
