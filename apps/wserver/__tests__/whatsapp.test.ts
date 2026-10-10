@@ -1,4 +1,12 @@
-import { startWhatsAppSession, gracefulShutdown } from '../src/lib/whatsapp';
+import {
+  startWhatsAppSession,
+  gracefulShutdown,
+  reconnectAttempts,
+  reconnectTimeouts,
+  clearReconnectState,
+  scheduleReconnect,
+  MAX_RECONNECT_RETRIES,
+} from '../src/lib/whatsapp';
 import { sessions } from '../src/worker';
 
 const mockEvListeners: Record<string, Function> = {};
@@ -71,7 +79,12 @@ jest.mock('bullmq', () => ({
 describe('wserver whatsapp session management', () => {
   beforeEach(() => {
     sessions.clear();
+    clearReconnectState('+919999999999');
     jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    gracefulShutdown();
   });
 
   it('should start a new whatsapp session and register event listeners', async () => {
@@ -82,7 +95,6 @@ describe('wserver whatsapp session management', () => {
     expect(mockEvListeners['creds.update']).toBeDefined();
     expect(mockEvListeners['messages.upsert']).toBeDefined();
 
-    // Trigger messages.upsert and creds.update
     const autoreplyMock = require('../src/autoreply');
     mockEvListeners['messages.upsert']({ messages: [] });
     expect(autoreplyMock).toHaveBeenCalled();
@@ -108,12 +120,14 @@ describe('wserver whatsapp session management', () => {
   });
 
   it('should handle connection.update OPEN event and fetch profile pic', async () => {
+    reconnectAttempts.set('+919999999999', 3);
     await startWhatsAppSession('+919999999999');
     const updateHandler = mockEvListeners['connection.update'];
 
     await updateHandler({ connection: 'open' });
     const { updateDeviceStatus } = require('../src/lib/helper');
     expect(updateDeviceStatus).toHaveBeenCalledWith('+919999999999', 'Connected');
+    expect(reconnectAttempts.has('+919999999999')).toBe(false);
   });
 
   it('should handle connection.update loggedOut CLOSE event', async () => {
@@ -157,9 +171,12 @@ describe('wserver whatsapp session management', () => {
         error: { output: { statusCode: 515 } },
       },
     });
+
+    expect(reconnectAttempts.get('+919999999999')).toBe(1);
+    expect(reconnectTimeouts.has('+919999999999')).toBe(true);
   });
 
-  it('should handle connection.update generic disconnect (reconnect)', async () => {
+  it('should handle connection.update generic disconnect with exponential backoff', async () => {
     await startWhatsAppSession('+919999999999');
     const updateHandler = mockEvListeners['connection.update'];
 
@@ -169,12 +186,37 @@ describe('wserver whatsapp session management', () => {
         error: { output: { statusCode: 500 } },
       },
     });
+
+    expect(reconnectAttempts.get('+919999999999')).toBe(1);
+    expect(reconnectTimeouts.has('+919999999999')).toBe(true);
   });
 
-  it('should handle gracefulShutdown', () => {
+  it('should stop reconnecting and mark device Disconnected when reaching MAX_RECONNECT_RETRIES', async () => {
+    reconnectAttempts.set('+919999999999', MAX_RECONNECT_RETRIES);
+
+    scheduleReconnect('+919999999999', false);
+
+    const { updateDeviceStatus } = require('../src/lib/helper');
+    const { redis } = require('@repo/redis');
+
+    expect(updateDeviceStatus).toHaveBeenCalledWith('+919999999999', 'Disconnected');
+    expect(redis.publish).toHaveBeenCalledWith(
+      'qr:+919999999999',
+      JSON.stringify({ event: 'DISCONNECTED', error: 'Max reconnect attempts reached' })
+    );
+    expect(reconnectAttempts.has('+919999999999')).toBe(false);
+    expect(reconnectTimeouts.has('+919999999999')).toBe(false);
+  });
+
+  it('should handle gracefulShutdown and clean up sessions and reconnect timeouts', () => {
     sessions.set('+919999999999', mockSock as any);
+    reconnectAttempts.set('+919999999999', 2);
+    reconnectTimeouts.set('+919999999999', setTimeout(() => {}, 10000));
+
     gracefulShutdown();
     expect(mockSock.end).toHaveBeenCalled();
     expect(sessions.size).toBe(0);
+    expect(reconnectAttempts.size).toBe(0);
+    expect(reconnectTimeouts.size).toBe(0);
   });
 });
