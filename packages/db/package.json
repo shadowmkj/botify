@@ -9,7 +9,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
-    "@prisma/client": "5.17.0"
+    "@prisma/client": "7.10.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
