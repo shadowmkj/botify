@@ -46,7 +46,7 @@
     "baileys": "7.0.0-rc.9",
     "baileys-antiban": "^3.9.0",
     "baileys_helper": "^1.0.6",
-    "body-parser": "^2.2.2",
+    "body-parser": "^2.4.0",
     "bullmq": "^5.70.1",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
