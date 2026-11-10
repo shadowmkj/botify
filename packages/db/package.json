@@ -13,9 +13,9 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "prisma": "5.17.0",
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "prisma": "7.10.1",
+    "tsup": "^9.0.0",
+    "typescript": "^7.0.2"
   },
   "exports": {
     ".": {
